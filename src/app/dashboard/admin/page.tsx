@@ -1,11 +1,14 @@
 
 'use client'
 
+import React from "react"
+import { useRouter } from "next/navigation"
+import { MoreHorizontal, UserPlus } from "lucide-react"
+
 import { PageHeader } from "@/components/page-header"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { MoreHorizontal, Plus, UserPlus } from "lucide-react"
-import { users } from "@/lib/data"
+import { users as initialUsers } from "@/lib/data"
 import type { User } from "@/lib/types"
 import {
   Table,
@@ -25,9 +28,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { useUser } from "@/context/user-context"
-import { useRouter } from "next/navigation"
-import React from "react"
-
+import { UserFormDialog } from "./user-form-dialog"
 
 const getInitials = (name: string) => {
   return name
@@ -37,17 +38,42 @@ const getInitials = (name: string) => {
     .join('');
 }
 
-
 export default function AdminPage() {
   const { user } = useUser()
   const router = useRouter()
+  const [users, setUsers] = React.useState<User[]>(initialUsers)
+  const [isDialogOpen, setIsDialogOpen] = React.useState(false)
+  const [editingUser, setEditingUser] = React.useState<User | undefined>(undefined)
 
   React.useEffect(() => {
-    // In a real app, you'd have more robust authorization
     if (user.role !== 'Music Director') {
       router.push('/dashboard')
     }
   }, [user, router])
+
+  const handleAddUser = () => {
+    setEditingUser(undefined)
+    setIsDialogOpen(true)
+  }
+
+  const handleEditUser = (userToEdit: User) => {
+    setEditingUser(userToEdit)
+    setIsDialogOpen(true)
+  }
+
+  const handleSaveUser = (savedUser: User) => {
+    if (savedUser.id) {
+      setUsers(users.map(u => u.id === savedUser.id ? savedUser : u))
+    } else {
+      const newUser = { ...savedUser, id: (users.length + 1).toString() }
+      setUsers([...users, newUser])
+    }
+  }
+
+  const handleDeleteUser = (userId: string) => {
+    setUsers(users.filter(u => u.id !== userId));
+  };
+
 
   if (user.role !== 'Music Director') {
     return (
@@ -63,7 +89,7 @@ export default function AdminPage() {
         title="User Management"
         description="Administer user accounts and roles."
       >
-        <Button>
+        <Button onClick={handleAddUser}>
           <UserPlus className="mr-2 h-4 w-4" />
           Add User
         </Button>
@@ -111,8 +137,8 @@ export default function AdminPage() {
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                        <DropdownMenuItem>Edit User</DropdownMenuItem>
-                        <DropdownMenuItem className="text-destructive">Delete User</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleEditUser(u)}>Edit User</DropdownMenuItem>
+                        <DropdownMenuItem className="text-destructive" onClick={() => handleDeleteUser(u.id)}>Delete User</DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </TableCell>
@@ -122,6 +148,12 @@ export default function AdminPage() {
           </Table>
         </CardContent>
       </Card>
+      <UserFormDialog
+        isOpen={isDialogOpen}
+        onOpenChange={setIsDialogOpen}
+        onSave={handleSaveUser}
+        user={editingUser}
+      />
     </div>
   )
 }

@@ -14,6 +14,7 @@ import {
   Settings,
   LogOut,
   ChevronDown,
+  Shield,
 } from "lucide-react";
 
 import {
@@ -48,14 +49,20 @@ const navItems = [
   { href: "/dashboard/concerts", icon: Music, label: "Concerts" },
   { href: "/dashboard/copyright", icon: FileText, label: "Copyright Checker" },
   { href: "/dashboard/import", icon: Upload, label: "Import" },
+  { href: "/dashboard/admin", icon: Shield, label: "Admin", requiredRole: "Music Director" },
 ];
 
 function MainNav() {
   const pathname = usePathname();
+  const { user } = useUser();
+
+  const visibleNavItems = navItems.filter(item => {
+    return !item.requiredRole || item.requiredRole === user.role;
+  });
 
   return (
     <SidebarMenu>
-      {navItems.map((item) => (
+      {visibleNavItems.map((item) => (
         <SidebarMenuItem key={item.href}>
           <Link href={item.href}>
             <SidebarMenuButton

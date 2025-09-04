@@ -148,7 +148,7 @@ export default function DashboardLayout({
               <Link href="/dashboard" className="flex items-center gap-2">
                 <AppLogo className="w-8 h-8 text-primary" />
                 <span className="font-headline text-2xl font-semibold hidden group-data-[state=expanded]:inline">
-                  Orchestra
+                  Tartones
                 </span>
               </Link>
             </SidebarHeader>

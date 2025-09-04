@@ -33,7 +33,7 @@ export default function LoginPage() {
           <div className="flex items-center justify-center mb-4">
             <AppLogo className="h-10 w-10 text-primary" />
           </div>
-          <CardTitle className="text-2xl font-headline text-center">Orchestra Assistant</CardTitle>
+          <CardTitle className="text-2xl font-headline text-center">Tartones</CardTitle>
           <CardDescription className="text-center">
             Enter your email below to login to your account
           </CardDescription>

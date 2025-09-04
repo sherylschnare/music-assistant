@@ -3,7 +3,7 @@ import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
 
 export const metadata: Metadata = {
-  title: 'Orchestra Assistant',
+  title: 'Tartones',
   description: 'Manage your music, copyrights, and concerts with ease.',
 };
 

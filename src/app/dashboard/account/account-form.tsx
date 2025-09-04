@@ -57,7 +57,7 @@ export function AccountForm() {
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setLoading(true)
     await new Promise(resolve => setTimeout(resolve, 500))
-    setUser(values as User);
+    setUser(values as Partial<User>);
     setLoading(false)
     toast({
       title: "Profile updated",

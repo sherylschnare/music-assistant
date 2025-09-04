@@ -1,3 +1,4 @@
+
 'use client'
 
 import Link from "next/link"
@@ -22,12 +23,18 @@ import {
 import { Label } from "@/components/ui/label"
 import { useUser } from "@/context/user-context"
 import type { User } from "@/lib/types"
-import { users } from "@/lib/data"
 
 export default function LoginPage() {
   const router = useRouter()
-  const { setUser } = useUser()
-  const [selectedUser, setSelectedUser] = React.useState<string>(users[0].id)
+  const { setUser, users } = useUser()
+  const [selectedUser, setSelectedUser] = React.useState<string>(users[0]?.id || '')
+
+  React.useEffect(() => {
+    if (users.length > 0 && !selectedUser) {
+      setSelectedUser(users[0].id)
+    }
+  }, [users, selectedUser]);
+
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault()
@@ -37,6 +44,8 @@ export default function LoginPage() {
     }
     router.push("/dashboard")
   }
+
+  if (!users.length) return null;
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-background">

@@ -8,7 +8,6 @@ import { MoreHorizontal, UserPlus } from "lucide-react"
 import { PageHeader } from "@/components/page-header"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { users as initialUsers } from "@/lib/data"
 import type { User } from "@/lib/types"
 import {
   Table,
@@ -39,9 +38,8 @@ const getInitials = (name: string) => {
 }
 
 export default function AdminPage() {
-  const { user } = useUser()
+  const { user, users, setUsers } = useUser()
   const router = useRouter()
-  const [users, setUsers] = React.useState<User[]>(initialUsers)
   const [isDialogOpen, setIsDialogOpen] = React.useState(false)
   const [editingUser, setEditingUser] = React.useState<User | undefined>(undefined)
 

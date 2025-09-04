@@ -34,7 +34,7 @@ export default function DashboardPage() {
   
   return (
     <div>
-      <PageHeader title="Welcome, Maria!" description="Here's a snapshot of your orchestra's activity.">
+      <PageHeader title="Welcome, Sheryl!" description="Here's a snapshot of your orchestra's activity.">
         <Button asChild>
           <Link href="/dashboard/library">
             <Plus className="mr-2 h-4 w-4" /> Add New Music

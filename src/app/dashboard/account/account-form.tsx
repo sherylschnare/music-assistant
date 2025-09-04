@@ -37,9 +37,9 @@ export function AccountForm() {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      name: "Maria Rossi",
+      name: "Sheryl Schnare",
       role: "Music Director",
-      email: "maria.rossi@example.com",
+      email: "sheryl.schnare@example.com",
     },
   })
 

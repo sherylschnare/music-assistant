@@ -77,10 +77,10 @@ function UserProfile() {
         <Button variant="ghost" className="flex items-center gap-3 w-full h-auto p-2 justify-start">
           <Avatar className="h-10 w-10">
             <AvatarImage src="https://picsum.photos/100" data-ai-hint="profile picture" />
-            <AvatarFallback>MD</AvatarFallback>
+            <AvatarFallback>SS</AvatarFallback>
           </Avatar>
           <div className="text-left hidden group-data-[state=expanded]:block">
-            <p className="font-semibold text-sm">Maria Rossi</p>
+            <p className="font-semibold text-sm">Sheryl Schnare</p>
             <p className="text-xs text-sidebar-foreground/70">
               Music Director
             </p>

@@ -67,7 +67,9 @@ export default function ImportPage() {
       complete: (results) => {
         try {
           const importedSongs: Song[] = results.data.map((row: any, index: number) => {
-            const [composer, lyricist, arranger] = (row['Details (Composer, Lyricist, Arranger)'] || ';;').split(';').map((s:string) => s.trim());
+            const details = (row['Details (Composer, Lyricist, Arranger)'] || ';;').split(';').map((s:string) => s.trim());
+            const [composer, lyricist, arranger] = details;
+            
             return {
               id: `imported-${Date.now()}-${index}`,
               title: row['Selection'] || 'N/A',

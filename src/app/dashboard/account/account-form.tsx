@@ -56,7 +56,7 @@ export function AccountForm() {
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setLoading(true)
     await new Promise(resolve => setTimeout(resolve, 500))
-    setUser({ name: values.name, role: values.role, email: values.email });
+    setUser({ name: values.name, role: values.role, email: user.email });
     setLoading(false)
     toast({
       title: "Profile updated",
@@ -106,10 +106,10 @@ export function AccountForm() {
             <FormItem>
               <FormLabel>Email</FormLabel>
               <FormControl>
-                <Input placeholder="Your email address" {...field} />
+                <Input placeholder="Your email address" {...field} readOnly className="cursor-not-allowed bg-muted" />
               </FormControl>
               <FormDescription>
-                This email will be used for notifications and account management.
+                Your email address cannot be changed.
               </FormDescription>
               <FormMessage />
             </FormItem>

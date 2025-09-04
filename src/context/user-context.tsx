@@ -20,7 +20,7 @@ const UserContext = createContext<UserContextType | undefined>(undefined);
 const defaultUser: User = {
     name: 'Sheryl Schnare',
     role: 'Music Director',
-    email: 'sheryl.schnare@example.com',
+    email: 'sherylschnare@birdsongstudio.ca',
 };
 
 export const UserProvider = ({ children }: { children: ReactNode }) => {
@@ -31,18 +31,28 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     try {
       const storedUser = localStorage.getItem('userProfile');
       if (storedUser) {
-        setUserState(JSON.parse(storedUser));
+        const parsedUser = JSON.parse(storedUser);
+        // Ensure email is not overwritten by old stored data if it doesn't match
+        if (parsedUser.email !== defaultUser.email) {
+          parsedUser.email = defaultUser.email;
+        }
+        setUserState(parsedUser);
+      } else {
+        setUserState(defaultUser);
       }
     } catch (error) {
       console.error("Failed to parse user from localStorage", error);
+      setUserState(defaultUser);
     }
     setLoading(false);
   }, []);
 
   const setUser = (newUser: User) => {
     try {
-      localStorage.setItem('userProfile', JSON.stringify(newUser));
-      setUserState(newUser);
+      // Prevent email from being changed
+      const userToSave = { ...newUser, email: user.email };
+      localStorage.setItem('userProfile', JSON.stringify(userToSave));
+      setUserState(userToSave);
     } catch (error) {
       console.error("Failed to save user to localStorage", error);
     }

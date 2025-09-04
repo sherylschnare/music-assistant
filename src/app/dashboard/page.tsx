@@ -12,8 +12,6 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/page-header";
-import { songs, concerts } from "@/lib/data";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useUser } from "@/context/user-context";
 
 function StatCard({ title, value, icon: Icon, description }: { title: string, value: string, icon: React.ElementType, description: string }) {
@@ -32,8 +30,8 @@ function StatCard({ title, value, icon: Icon, description }: { title: string, va
 }
 
 export default function DashboardPage() {
-  const { user } = useUser();
-  const upcomingConcert = concerts.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())[0];
+  const { user, songs, concerts } = useUser();
+  const upcomingConcert = concerts.length > 0 ? [...concerts].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())[0] : null;
   const recentlyPerformed = songs.filter(s => s.lastPerformed).sort((a,b) => new Date(b.lastPerformed!).getTime() - new Date(a.lastPerformed!).getTime()).slice(0, 5);
   
   return (
@@ -49,45 +47,64 @@ export default function DashboardPage() {
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 mb-8">
         <StatCard title="Total Pieces" value={songs.length.toString()} icon={Library} description="Music pieces in your library" />
         <StatCard title="Concerts Planned" value={concerts.length.toString()} icon={Music} description="Total concerts in history" />
-        <StatCard title="Upcoming Concert" value={new Date(upcomingConcert.date).toLocaleDateString()} icon={Music} description={`Next up: ${upcomingConcert.name}`} />
+        {upcomingConcert ? (
+          <StatCard title="Upcoming Concert" value={new Date(upcomingConcert.date).toLocaleDateString()} icon={Music} description={`Next up: ${upcomingConcert.name}`} />
+        ) : (
+          <StatCard title="Upcoming Concert" value="N/A" icon={Music} description="No concerts scheduled" />
+        )}
       </div>
 
       <div className="grid gap-8 lg:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle>Upcoming Concert: {upcomingConcert.name}</CardTitle>
-            <CardDescription>{new Date(upcomingConcert.date).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ul className="space-y-2">
-              {upcomingConcert.pieces.map(piece => (
-                <li key={piece.id} className="text-sm text-muted-foreground">{piece.title} - <span className="italic">{piece.composer}</span></li>
-              ))}
-            </ul>
-          </CardContent>
-        </Card>
+        {upcomingConcert ? (
+          <Card>
+            <CardHeader>
+              <CardTitle>Upcoming Concert: {upcomingConcert.name}</CardTitle>
+              <CardDescription>{new Date(upcomingConcer.date).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ul className="space-y-2">
+                {upcomingConcert.pieces.map(piece => (
+                  <li key={piece.id} className="text-sm text-muted-foreground">{piece.title} - <span className="italic">{piece.composer}</span></li>
+                ))}
+              </ul>
+            </CardContent>
+          </Card>
+        ) : (
+           <Card>
+            <CardHeader>
+              <CardTitle>No Upcoming Concerts</CardTitle>
+              <CardDescription>Create a new concert program to get started.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button asChild>
+                <Link href="/dashboard/concerts">Create a Concert</Link>
+              </Button>
+            </CardContent>
+          </Card>
+        )}
         <Card>
           <CardHeader>
             <CardTitle>Recently Performed</CardTitle>
             <CardDescription>A look at what you've played recently.</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              {recentlyPerformed.map(song => (
-                <div key={song.id} className="flex items-center">
-                  <Avatar className="h-9 w-9">
-                    <AvatarFallback>{song.composer.charAt(0)}</AvatarFallback>
-                  </Avatar>
-                  <div className="ml-4 space-y-1">
-                    <p className="text-sm font-medium leading-none">{song.title}</p>
-                    <p className="text-sm text-muted-foreground">{song.composer}</p>
+            {recentlyPerformed.length > 0 ? (
+              <div className="space-y-4">
+                {recentlyPerformed.map(song => (
+                  <div key={song.id} className="flex items-center">
+                    <div className="ml-4 space-y-1">
+                      <p className="text-sm font-medium leading-none">{song.title}</p>
+                      <p className="text-sm text-muted-foreground">{song.composer}</p>
+                    </div>
+                    <div className="ml-auto font-medium text-sm">
+                      {song.lastPerformed ? new Date(song.lastPerformed).toLocaleDateString() : 'N/A'}
+                    </div>
                   </div>
-                  <div className="ml-auto font-medium text-sm">
-                    {song.lastPerformed ? new Date(song.lastPerformed).toLocaleDateString() : 'N/A'}
-                  </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground">No recently performed pieces.</p>
+            )}
           </CardContent>
         </Card>
       </div>

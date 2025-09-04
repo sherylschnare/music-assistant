@@ -6,10 +6,12 @@ import { PageHeader } from "@/components/page-header"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { UploadCloud, File as FileIcon, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { useToast } from "@/hooks/use-toast"
 
 export default function ImportPage() {
   const [file, setFile] = React.useState<File | null>(null)
   const fileInputRef = React.useRef<HTMLInputElement>(null)
+  const { toast } = useToast()
 
   const handleFileSelect = (selectedFile: File) => {
     // Basic validation for allowed file types
@@ -17,8 +19,11 @@ export default function ImportPage() {
     if (selectedFile && allowedTypes.includes(selectedFile.type)) {
       setFile(selectedFile);
     } else {
-      // You could show a toast notification here for invalid file types
-      console.warn("Invalid file type selected.");
+      toast({
+        variant: "destructive",
+        title: "Invalid File Type",
+        description: "Please select an XLSX, XLS, or CSV file.",
+      })
     }
   };
 
@@ -50,6 +55,19 @@ export default function ImportPage() {
     }
   };
 
+  const handleUpload = () => {
+    if (!file) return;
+
+    // In a real application, you would send the file to the server here.
+    // For this demo, we'll just show a success message.
+    toast({
+      title: "Upload Successful",
+      description: `The file "${file.name}" has been uploaded.`,
+    });
+
+    onRemoveFile(); // Clear the file after "uploading"
+  }
+
   return (
     <div>
       <PageHeader
@@ -65,7 +83,7 @@ export default function ImportPage() {
           <CardContent>
             <input
               type="file"
-              ref={fileInputRef}
+              ref={fileInput.current}
               onChange={onFileChange}
               className="hidden"
               accept=".xlsx, .xls, .csv"
@@ -91,7 +109,7 @@ export default function ImportPage() {
                 <p className="mt-4 font-medium">{file.name}</p>
                 <p className="text-sm text-muted-foreground">{(file.size / 1024).toFixed(2)} KB</p>
                 <div className="mt-4 flex gap-2">
-                    <Button onClick={() => { /* Implement upload logic here */ }}>Upload File</Button>
+                    <Button onClick={handleUpload}>Upload File</Button>
                     <Button variant="ghost" onClick={onRemoveFile}>
                         <X className="mr-2 h-4 w-4" /> Remove
                     </Button>

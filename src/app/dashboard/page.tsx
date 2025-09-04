@@ -31,6 +31,11 @@ function StatCard({ title, value, icon: Icon, description }: { title: string, va
 
 export default function DashboardPage() {
   const { user, songs, concerts } = useUser();
+
+  if (!concerts || !songs) {
+    return null; // Or a loading indicator
+  }
+
   const upcomingConcert = concerts.length > 0 ? [...concerts].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())[0] : null;
   const recentlyPerformed = songs.filter(s => s.lastPerformed).sort((a,b) => new Date(b.lastPerformed!).getTime() - new Date(a.lastPerformed!).getTime()).slice(0, 5);
   
@@ -59,7 +64,7 @@ export default function DashboardPage() {
           <Card>
             <CardHeader>
               <CardTitle>Upcoming Concert: {upcomingConcert.name}</CardTitle>
-              <CardDescription>{new Date(upcomingConcer.date).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</CardDescription>
+              <CardDescription>{new Date(upcomingConcert.date).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</CardDescription>
             </CardHeader>
             <CardContent>
               <ul className="space-y-2">

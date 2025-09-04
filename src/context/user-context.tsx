@@ -2,8 +2,8 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import type { Song, User } from '@/lib/types';
-import { users as defaultUsers, songs as defaultSongs } from '@/lib/data';
+import type { Song, User, Concert } from '@/lib/types';
+import { users as defaultUsers, songs as defaultSongs, concerts as defaultConcerts } from '@/lib/data';
 
 interface UserContextType {
   user: User;
@@ -12,6 +12,8 @@ interface UserContextType {
   setUsers: (users: User[]) => void;
   songs: Song[];
   setSongs: (songs: Song[]) => void;
+  concerts: Concert[];
+  setConcerts: (concerts: Concert[]) => void;
   loading: boolean;
 }
 
@@ -23,6 +25,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUserState] = useState<User>(defaultUser);
   const [users, setUsersState] = useState<User[]>(defaultUsers);
   const [songs, setSongsState] = useState<Song[]>(defaultSongs);
+  const [concerts, setConcertsState] = useState<Concert[]>(defaultConcerts);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -49,11 +52,19 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         setSongsState(defaultSongs);
       }
 
+      const storedConcerts = localStorage.getItem('concertList');
+      if (storedConcerts) {
+        setConcertsState(JSON.parse(storedConcerts));
+      } else {
+        setConcertsState(defaultConcerts);
+      }
+
     } catch (error) {
       console.error("Failed to parse from localStorage", error);
       setUserState(defaultUser);
       setUsersState(defaultUsers);
       setSongsState(defaultSongs);
+      setConcertsState(defaultConcerts);
     }
     setLoading(false);
   }, []);
@@ -76,6 +87,15 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  const setConcerts = (newConcerts: Concert[]) => {
+    try {
+      localStorage.setItem('concertList', JSON.stringify(newConcerts));
+      setConcertsState(newConcerts);
+    } catch (error) {
+      console.error("Failed to save concerts to localStorage", error);
+    }
+  }
+
   const updateUser = (updatedFields: Partial<User>) => {
     const updatedUser = { ...user, ...updatedFields };
     try {
@@ -91,7 +111,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     }
   }
 
-  const value = { user, setUser: updateUser, users, setUsers, songs, setSongs, loading };
+  const value = { user, setUser: updateUser, users, setUsers, songs, setSongs, concerts, setConcerts, loading };
 
   return (
     <UserContext.Provider value={value}>

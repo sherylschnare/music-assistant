@@ -19,3 +19,10 @@ export type Concert = {
   date: string;
   pieces: Song[];
 };
+
+export type User = {
+  id: string;
+  name: string;
+  role: 'Music Director' | 'Librarian' | 'Musician';
+  email: string;
+}

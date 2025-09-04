@@ -7,6 +7,7 @@ import { z } from "zod"
 import React from "react"
 import { useToast } from "@/hooks/use-toast"
 import { useUser } from "@/context/user-context"
+import type { User } from "@/lib/types"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -56,7 +57,7 @@ export function AccountForm() {
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setLoading(true)
     await new Promise(resolve => setTimeout(resolve, 500))
-    setUser({ name: values.name, role: values.role, email: values.email });
+    setUser(values as User);
     setLoading(false)
     toast({
       title: "Profile updated",

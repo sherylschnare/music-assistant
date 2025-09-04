@@ -2,8 +2,8 @@
 
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { Music2 } from "lucide-react"
-
+import React from "react"
+import { AppLogo } from "@/components/icons"
 import { Button } from "@/components/ui/button"
 import {
   Card,
@@ -12,17 +12,29 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { Label } from "@/components/ui/label"
-import { AppLogo } from "@/components/icons"
+import { useUser } from "@/context/user-context"
+import type { User } from "@/lib/types"
+import { users } from "@/lib/data"
 
 export default function LoginPage() {
   const router = useRouter()
+  const { setUser } = useUser()
+  const [selectedUser, setSelectedUser] = React.useState<string>(users[0].id)
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault()
-    // In a real app, you'd perform authentication here.
-    // For this demo, we'll just navigate to the dashboard.
+    const user = users.find(u => u.id === selectedUser)
+    if (user) {
+      setUser(user)
+    }
     router.push("/dashboard")
   }
 
@@ -35,37 +47,28 @@ export default function LoginPage() {
           </div>
           <CardTitle className="text-2xl font-headline text-center">Tartones</CardTitle>
           <CardDescription className="text-center">
-            Enter your email below to login to your account
+            Select a user profile to log in
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleLogin} className="grid gap-4">
             <div className="grid gap-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="m@example.com"
-                required
-              />
-            </div>
-            <div className="grid gap-2">
-              <div className="flex items-center">
-                <Label htmlFor="password">Password</Label>
-                <Link
-                  href="#"
-                  className="ml-auto inline-block text-sm underline"
-                >
-                  Forgot your password?
-                </Link>
-              </div>
-              <Input id="password" type="password" required />
+              <Label htmlFor="user-select">User Role</Label>
+              <Select value={selectedUser} onValueChange={setSelectedUser}>
+                <SelectTrigger id="user-select">
+                  <SelectValue placeholder="Select a user" />
+                </SelectTrigger>
+                <SelectContent>
+                  {users.map(user => (
+                    <SelectItem key={user.id} value={user.id}>
+                      {user.name} ({user.role})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <Button type="submit" className="w-full bg-primary hover:bg-primary/90">
               Login
-            </Button>
-            <Button variant="outline" className="w-full">
-              Login with Google
             </Button>
           </form>
           <div className="mt-4 text-center text-sm">

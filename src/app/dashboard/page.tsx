@@ -1,3 +1,6 @@
+
+'use client'
+
 import Link from "next/link";
 import { Plus, Library, Music } from "lucide-react";
 import {
@@ -11,7 +14,7 @@ import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/page-header";
 import { songs, concerts } from "@/lib/data";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
+import { useUser } from "@/context/user-context";
 
 function StatCard({ title, value, icon: Icon, description }: { title: string, value: string, icon: React.ElementType, description: string }) {
   return (
@@ -29,12 +32,13 @@ function StatCard({ title, value, icon: Icon, description }: { title: string, va
 }
 
 export default function DashboardPage() {
+  const { user } = useUser();
   const upcomingConcert = concerts.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())[0];
   const recentlyPerformed = songs.filter(s => s.lastPerformed).sort((a,b) => new Date(b.lastPerformed!).getTime() - new Date(a.lastPerformed!).getTime()).slice(0, 5);
   
   return (
     <div>
-      <PageHeader title="Welcome, Sheryl!" description="Here's a snapshot of your orchestra's activity.">
+      <PageHeader title={`Welcome, ${user.name}!`} description="Here's a snapshot of your orchestra's activity.">
         <Button asChild>
           <Link href="/dashboard/library">
             <Plus className="mr-2 h-4 w-4" /> Add New Music

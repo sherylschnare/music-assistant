@@ -90,44 +90,46 @@ function UserProfile() {
   }
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="ghost" className="flex items-center gap-3 w-full h-auto p-2 justify-start">
-          <Avatar className="h-10 w-10">
-            <AvatarImage src="https://picsum.photos/100" data-ai-hint="profile picture" />
-            <AvatarFallback>{getInitials(user.name)}</AvatarFallback>
-          </Avatar>
-          <div className="text-left hidden group-data-[state=expanded]:block">
-            <p className="font-semibold text-sm">{user.name}</p>
-            <p className="text-xs text-sidebar-foreground/70">
-              {user.role}
-            </p>
-          </div>
-          <ChevronDown className="ml-auto h-4 w-4 opacity-50 hidden group-data-[state=expanded]:block" />
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent side="right" align="start" className="w-56">
-        <DropdownMenuLabel>My Account</DropdownMenuLabel>
-        <DropdownMenuSeparator />
-        <DropdownMenuItem asChild>
-          <Link href="/dashboard/account">
-            <User className="mr-2 h-4 w-4" />
-            <span>Profile</span>
-          </Link>
-        </DropdownMenuItem>
-        <DropdownMenuItem asChild>
-          <Link href="/dashboard/settings">
-            <Settings className="mr-2 h-4 w-4" />
-            <span>Settings</span>
-          </Link>
-        </DropdownMenuItem>
-        <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={handleLogout}>
-          <LogOut className="mr-2 h-4 w-4" />
-          <span>Log out</span>
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
+    <UserProvider>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="ghost" className="flex items-center gap-3 w-full h-auto p-2 justify-start">
+            <Avatar className="h-10 w-10">
+              <AvatarImage src="https://picsum.photos/100" data-ai-hint="profile picture" />
+              <AvatarFallback>{getInitials(user.name)}</AvatarFallback>
+            </Avatar>
+            <div className="text-left hidden group-data-[state=expanded]:block">
+              <p className="font-semibold text-sm">{user.name}</p>
+              <p className="text-xs text-sidebar-foreground/70">
+                {user.role}
+              </p>
+            </div>
+            <ChevronDown className="ml-auto h-4 w-4 opacity-50 hidden group-data-[state=expanded]:block" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent side="right" align="start" className="w-56">
+          <DropdownMenuLabel>My Account</DropdownMenuLabel>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem asChild>
+            <Link href="/dashboard/account">
+              <User className="mr-2 h-4 w-4" />
+              <span>Profile</span>
+            </Link>
+          </DropdownMenuItem>
+          <DropdownMenuItem asChild>
+            <Link href="/dashboard/settings">
+              <Settings className="mr-2 h-4 w-4" />
+              <span>Settings</span>
+            </Link>
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem onClick={handleLogout}>
+            <LogOut className="mr-2 h-4 w-4" />
+            <span>Log out</span>
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </UserProvider>
   );
 }
 

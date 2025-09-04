@@ -34,6 +34,7 @@ const formSchema = z.object({
   role: z.enum(["Music Director", "Librarian", "Musician"], {
     required_error: "Please select a role.",
   }),
+  password: z.string().optional(),
 })
 
 type UserFormValues = z.infer<typeof formSchema>
@@ -54,12 +55,21 @@ export function UserFormDialog({ isOpen, onOpenChange, onSave, user }: UserFormD
     if (user) {
       form.reset(user)
     } else {
-      form.reset({ id: undefined, name: "", email: "", role: undefined })
+      // For new users, we don't set a password. They do it on first login.
+      form.reset({ id: undefined, name: "", email: "", role: undefined, password: "" })
     }
   }, [user, form, isOpen])
 
   const onSubmit = (values: UserFormValues) => {
-    onSave(values as User)
+    // Ensure password is not sent if empty, it's handled on first login
+    const userToSave = { ...values };
+    if (user) { // If editing, keep old password if not changed
+      userToSave.password = user.password;
+    } else {
+      delete userToSave.password;
+    }
+    
+    onSave(userToSave as User)
     onOpenChange(false)
   }
 
@@ -69,7 +79,7 @@ export function UserFormDialog({ isOpen, onOpenChange, onSave, user }: UserFormD
         <DialogHeader>
           <DialogTitle>{user ? "Edit User" : "Add New User"}</DialogTitle>
           <DialogDescription>
-            {user ? "Update the user's details below." : "Enter the details for the new user."}
+            {user ? "Update the user's details below." : "Enter the details for the new user. They will set a password on first login."}
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>

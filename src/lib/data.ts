@@ -5,7 +5,8 @@ export const users: User[] = [
     id: '1',
     name: 'Sheryl Schnare',
     role: 'Music Director',
-    email: 'sheryl.schnare@example.com',
+    email: 'sherylschnare@birdsongstudio.ca',
+    password: 'password123'
   },
   {
     id: '2',

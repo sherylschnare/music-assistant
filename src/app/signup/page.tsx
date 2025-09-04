@@ -2,7 +2,8 @@
 
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-
+import React from "react"
+import { useUser } from "@/context/user-context"
 import { Button } from "@/components/ui/button"
 import {
   Card,
@@ -17,12 +18,45 @@ import { AppLogo } from "@/components/icons"
 
 export default function SignupPage() {
     const router = useRouter()
+    const { users, setUsers, setUser } = useUser();
+    const [error, setError] = React.useState<string | null>(null);
 
-    const handleSignup = (e: React.FormEvent) => {
+    const handleSignup = (e: React.FormEvent<HTMLFormElement>) => {
       e.preventDefault()
-      // In a real app, you'd perform registration here.
-      // For this demo, we'll just navigate to the dashboard.
-      router.push("/dashboard")
+      const form = e.currentTarget;
+      const formData = new FormData(form);
+      const firstName = formData.get("first-name") as string;
+      const lastName = formData.get("last-name") as string;
+      const email = formData.get("email") as string;
+      const password = formData.get("password") as string;
+      const confirmPassword = formData.get("confirm-password") as string;
+
+      if (password !== confirmPassword) {
+        setError("Passwords do not match.");
+        return;
+      }
+      
+      if (password.length < 8) {
+        setError("Password must be at least 8 characters long.");
+        return;
+      }
+
+      if (users.some(u => u.email.toLowerCase() === email.toLowerCase())) {
+        setError("An account with this email already exists.");
+        return;
+      }
+
+      const newUser = {
+        id: (users.length + 1).toString(),
+        name: `${firstName} ${lastName}`,
+        email,
+        role: "Musician" as const,
+        password: password,
+      };
+
+      setUsers([...users, newUser]);
+      setUser(newUser);
+      router.push("/dashboard");
     }
 
   return (
@@ -42,17 +76,18 @@ export default function SignupPage() {
             <div className="grid grid-cols-2 gap-4">
               <div className="grid gap-2">
                 <Label htmlFor="first-name">First name</Label>
-                <Input id="first-name" placeholder="Max" required />
+                <Input id="first-name" name="first-name" placeholder="Max" required />
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="last-name">Last name</Label>
-                <Input id="last-name" placeholder="Robinson" required />
+                <Input id="last-name" name="last-name" placeholder="Robinson" required />
               </div>
             </div>
             <div className="grid gap-2">
               <Label htmlFor="email">Email</Label>
               <Input
                 id="email"
+                name="email"
                 type="email"
                 placeholder="m@example.com"
                 required
@@ -60,8 +95,15 @@ export default function SignupPage() {
             </div>
             <div className="grid gap-2">
               <Label htmlFor="password">Password</Label>
-              <Input id="password" type="password" />
+              <Input id="password" name="password" type="password" required />
             </div>
+            <div className="grid gap-2">
+              <Label htmlFor="confirm-password">Confirm Password</Label>
+              <Input id="confirm-password" name="confirm-password" type="password" required />
+            </div>
+
+            {error && <p className="text-sm text-destructive text-center">{error}</p>}
+
             <Button type="submit" className="w-full bg-primary hover:bg-primary/90">
               Create an account
             </Button>

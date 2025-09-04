@@ -25,4 +25,5 @@ export type User = {
   name: string;
   role: 'Music Director' | 'Librarian' | 'Musician';
   email: string;
+  password?: string;
 }

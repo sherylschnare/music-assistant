@@ -6,6 +6,7 @@ import { useForm } from "react-hook-form"
 import { z } from "zod"
 import React from "react"
 import { useToast } from "@/hooks/use-toast"
+import { useUser } from "@/context/user-context"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -33,20 +34,29 @@ const formSchema = z.object({
 export function AccountForm() {
   const [loading, setLoading] = React.useState(false)
   const { toast } = useToast()
+  const { user, setUser } = useUser();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
-    defaultValues: {
-      name: "Sheryl Schnare",
-      role: "Music Director",
-      email: "sheryl.schnare@example.com",
+    values: {
+      name: user.name,
+      role: user.role,
+      email: user.email,
     },
   })
+  
+  React.useEffect(() => {
+    form.reset({
+      name: user.name,
+      role: user.role,
+      email: user.email,
+    })
+  }, [user, form])
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setLoading(true)
-    // Simulate an API call
-    await new Promise(resolve => setTimeout(resolve, 1000))
+    await new Promise(resolve => setTimeout(resolve, 500))
+    setUser({ name: values.name, role: values.role, email: values.email });
     setLoading(false)
     toast({
       title: "Profile updated",

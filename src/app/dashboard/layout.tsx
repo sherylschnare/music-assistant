@@ -39,6 +39,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { UserProvider, useUser } from "@/context/user-context";
 
 const navItems = [
   { href: "/dashboard", icon: Home, label: "Home" },
@@ -73,11 +74,19 @@ function MainNav() {
 
 function UserProfile() {
   const router = useRouter();
+  const { user } = useUser();
 
   const handleLogout = () => {
-    // In a real app, you would clear the session/token here
     router.push("/");
   };
+  
+  const getInitials = (name: string) => {
+    return name
+      .split(' ')
+      .map(n => n[0])
+      .slice(0, 2)
+      .join('');
+  }
 
   return (
     <DropdownMenu>
@@ -85,12 +94,12 @@ function UserProfile() {
         <Button variant="ghost" className="flex items-center gap-3 w-full h-auto p-2 justify-start">
           <Avatar className="h-10 w-10">
             <AvatarImage src="https://picsum.photos/100" data-ai-hint="profile picture" />
-            <AvatarFallback>SS</AvatarFallback>
+            <AvatarFallback>{getInitials(user.name)}</AvatarFallback>
           </Avatar>
           <div className="text-left hidden group-data-[state=expanded]:block">
-            <p className="font-semibold text-sm">Sheryl Schnare</p>
+            <p className="font-semibold text-sm">{user.name}</p>
             <p className="text-xs text-sidebar-foreground/70">
-              Music Director
+              {user.role}
             </p>
           </div>
           <ChevronDown className="ml-auto h-4 w-4 opacity-50 hidden group-data-[state=expanded]:block" />
@@ -125,31 +134,33 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   return (
-    <SidebarProvider>
-      <div className="flex min-h-screen">
-        <Sidebar
-          className="border-r bg-sidebar text-sidebar-foreground"
-          collapsible="icon"
-        >
-          <SidebarHeader className="p-4">
-            <Link href="/dashboard" className="flex items-center gap-2">
-              <AppLogo className="w-8 h-8 text-primary" />
-              <span className="font-headline text-2xl font-semibold hidden group-data-[state=expanded]:inline">
-                Orchestra
-              </span>
-            </Link>
-          </SidebarHeader>
-          <SidebarContent className="p-4">
-            <MainNav />
-          </SidebarContent>
-          <SidebarFooter className="p-4">
-            <UserProfile />
-          </SidebarFooter>
-        </Sidebar>
-        <main className="flex-1 bg-background">
-          <div className="p-4 sm:p-6 lg:p-8">{children}</div>
-        </main>
-      </div>
-    </SidebarProvider>
+    <UserProvider>
+      <SidebarProvider>
+        <div className="flex min-h-screen">
+          <Sidebar
+            className="border-r bg-sidebar text-sidebar-foreground"
+            collapsible="icon"
+          >
+            <SidebarHeader className="p-4">
+              <Link href="/dashboard" className="flex items-center gap-2">
+                <AppLogo className="w-8 h-8 text-primary" />
+                <span className="font-headline text-2xl font-semibold hidden group-data-[state=expanded]:inline">
+                  Orchestra
+                </span>
+              </Link>
+            </SidebarHeader>
+            <SidebarContent className="p-4">
+              <MainNav />
+            </SidebarContent>
+            <SidebarFooter className="p-4">
+              <UserProfile />
+            </SidebarFooter>
+          </Sidebar>
+          <main className="flex-1 bg-background">
+            <div className="p-4 sm:p-6 lg:p-8">{children}</div>
+          </main>
+        </div>
+      </SidebarProvider>
+    </UserProvider>
   );
 }

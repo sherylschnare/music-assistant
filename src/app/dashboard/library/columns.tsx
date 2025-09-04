@@ -1,3 +1,4 @@
+
 "use client"
 
 import { ColumnDef } from "@tanstack/react-table"
@@ -84,9 +85,9 @@ export const columns: ColumnDef<Song>[] = [
     cell: ({ row }) => <div>{row.getValue("composer")}</div>,
   },
   {
-    accessorKey: "publisher",
-    header: "Publisher",
-    cell: ({ row }) => <div className="text-muted-foreground">{row.getValue("publisher")}</div>,
+    accessorKey: "copyright",
+    header: "Copyright",
+    cell: ({ row }) => <div className="text-muted-foreground">{row.getValue("copyright")}</div>,
   },
   {
     accessorKey: "type",

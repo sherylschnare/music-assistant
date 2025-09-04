@@ -83,7 +83,7 @@ export default function ImportPage() {
           <CardContent>
             <input
               type="file"
-              ref={fileInput.current}
+              ref={fileInputRef}
               onChange={onFileChange}
               className="hidden"
               accept=".xlsx, .xls, .csv"

@@ -2,14 +2,16 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import type { User } from '@/lib/types';
-import { users as defaultUsers } from '@/lib/data';
+import type { Song, User } from '@/lib/types';
+import { users as defaultUsers, songs as defaultSongs } from '@/lib/data';
 
 interface UserContextType {
   user: User;
   setUser: (user: Partial<User>) => void;
   users: User[];
   setUsers: (users: User[]) => void;
+  songs: Song[];
+  setSongs: (songs: Song[]) => void;
   loading: boolean;
 }
 
@@ -20,6 +22,7 @@ const defaultUser: User = defaultUsers[0];
 export const UserProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUserState] = useState<User>(defaultUser);
   const [users, setUsersState] = useState<User[]>(defaultUsers);
+  const [songs, setSongsState] = useState<Song[]>(defaultSongs);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -38,11 +41,19 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
       } else {
         setUsersState(defaultUsers);
       }
+      
+      const storedSongs = localStorage.getItem('songList');
+      if (storedSongs) {
+        setSongsState(JSON.parse(storedSongs));
+      } else {
+        setSongsState(defaultSongs);
+      }
 
     } catch (error) {
       console.error("Failed to parse from localStorage", error);
       setUserState(defaultUser);
       setUsersState(defaultUsers);
+      setSongsState(defaultSongs);
     }
     setLoading(false);
   }, []);
@@ -55,6 +66,15 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
       console.error("Failed to save users to localStorage", error);
     }
   }
+
+  const setSongs = (newSongs: Song[]) => {
+    try {
+      localStorage.setItem('songList', JSON.stringify(newSongs));
+      setSongsState(newSongs);
+    } catch (error) {
+      console.error("Failed to save songs to localStorage", error);
+    }
+  };
 
   const updateUser = (updatedFields: Partial<User>) => {
     const updatedUser = { ...user, ...updatedFields };
@@ -71,7 +91,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     }
   }
 
-  const value = { user, setUser: updateUser, users, setUsers, loading };
+  const value = { user, setUser: updateUser, users, setUsers, songs, setSongs, loading };
 
   return (
     <UserContext.Provider value={value}>

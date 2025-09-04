@@ -2,27 +2,30 @@
 'use client'
 
 import React from "react"
+import Papa from "papaparse"
 import { PageHeader } from "@/components/page-header"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { UploadCloud, File as FileIcon, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useToast } from "@/hooks/use-toast"
+import { useUser } from "@/context/user-context"
+import type { Song } from "@/lib/types"
 
 export default function ImportPage() {
   const [file, setFile] = React.useState<File | null>(null)
   const fileInputRef = React.useRef<HTMLInputElement>(null)
   const { toast } = useToast()
+  const { songs, setSongs } = useUser()
 
   const handleFileSelect = (selectedFile: File) => {
-    // Basic validation for allowed file types
-    const allowedTypes = ["application/vnd.ms-excel", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "text/csv"];
+    const allowedTypes = ["text/csv"];
     if (selectedFile && allowedTypes.includes(selectedFile.type)) {
       setFile(selectedFile);
     } else {
       toast({
         variant: "destructive",
         title: "Invalid File Type",
-        description: "Please select an XLSX, XLS, or CSV file.",
+        description: "Please select a CSV file.",
       })
     }
   };
@@ -58,27 +61,68 @@ export default function ImportPage() {
   const handleUpload = () => {
     if (!file) return;
 
-    // In a real application, you would send the file to the server here.
-    // For this demo, we'll just show a success message.
-    toast({
-      title: "Upload Successful",
-      description: `The file "${file.name}" has been uploaded.`,
-    });
+    Papa.parse(file, {
+      header: true,
+      skipEmptyLines: true,
+      complete: (results) => {
+        try {
+          const importedSongs: Song[] = results.data.map((row: any, index: number) => {
+            const [composer, lyricist, arranger] = (row['Details (Composer, Lyricist, Arranger)'] || ';;').split(';').map((s:string) => s.trim());
+            return {
+              id: `imported-${Date.now()}-${index}`,
+              title: row['Selection'] || 'N/A',
+              composer: composer || 'N/A',
+              lyricist: lyricist || 'N/A',
+              arranger: arranger || 'N/A',
+              copyright: row['Copyright / Arrangement'] || 'N/A',
+              type: row['Type'] || 'Choral',
+              publisher: 'N/A',
+              catalogNumber: 'N/A',
+              quantity: 1,
+              performanceHistory: [],
+            }
+          });
 
-    onRemoveFile(); // Clear the file after "uploading"
+          // A simple merge strategy: add new songs, don't update existing ones for now.
+          const newSongs = [...songs, ...importedSongs];
+          setSongs(newSongs);
+
+          toast({
+            title: "Import Successful",
+            description: `Successfully imported ${importedSongs.length} songs.`,
+          });
+        } catch (error) {
+           toast({
+            variant: "destructive",
+            title: "Import Failed",
+            description: "Could not process the CSV file. Please check the format.",
+          });
+        } finally {
+            onRemoveFile();
+        }
+      },
+      error: (error) => {
+        toast({
+          variant: "destructive",
+          title: "Import Failed",
+          description: `An error occurred while parsing: ${error.message}`,
+        });
+        onRemoveFile();
+      }
+    });
   }
 
   return (
     <div>
       <PageHeader
         title="Import Music Library"
-        description="Upload a file to populate your music library."
+        description="Upload a CSV file to populate your music library."
       />
       <div className="grid lg:grid-cols-2 gap-8">
         <Card>
           <CardHeader>
             <CardTitle className="font-headline">Upload Your File</CardTitle>
-            <CardDescription>Drag and drop your file here or click to browse.</CardDescription>
+            <CardDescription>Drag and drop your CSV file here or click to browse.</CardDescription>
           </CardHeader>
           <CardContent>
             <input
@@ -86,7 +130,7 @@ export default function ImportPage() {
               ref={fileInputRef}
               onChange={onFileChange}
               className="hidden"
-              accept=".xlsx, .xls, .csv"
+              accept=".csv"
             />
             {!file ? (
                <div
@@ -100,7 +144,7 @@ export default function ImportPage() {
                   <p className="mb-2 text-sm text-muted-foreground">
                     <span className="font-semibold">Click to upload</span> or drag and drop
                   </p>
-                  <p className="text-xs text-muted-foreground">XLSX, XLS, or CSV files</p>
+                  <p className="text-xs text-muted-foreground">CSV files only</p>
                 </div>
               </div>
             ) : (
@@ -116,7 +160,6 @@ export default function ImportPage() {
                 </div>
               </div>
             )}
-            <p className="text-xs text-muted-foreground mt-4">Note: The file import functionality is for demonstration purposes. Uploaded files will not be processed on the server.</p>
           </CardContent>
         </Card>
         <Card>

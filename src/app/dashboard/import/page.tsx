@@ -1,3 +1,4 @@
+
 'use client'
 
 import { PageHeader } from "@/components/page-header"
@@ -8,14 +9,14 @@ export default function ImportPage() {
   return (
     <div>
       <PageHeader
-        title="Import Music Data"
-        description="Upload your Excel files to populate your music library."
+        title="Import Music Library"
+        description="Upload a file to populate your music library."
       />
       <div className="grid lg:grid-cols-2 gap-8">
         <Card>
           <CardHeader>
-            <CardTitle className="font-headline">Upload Your Files</CardTitle>
-            <CardDescription>Drag and drop your Excel files here or click to browse.</CardDescription>
+            <CardTitle className="font-headline">Upload Your File</CardTitle>
+            <CardDescription>Drag and drop your file here or click to browse.</CardDescription>
           </CardHeader>
           <CardContent>
             <div
@@ -35,33 +36,17 @@ export default function ImportPage() {
         <Card>
           <CardHeader>
             <CardTitle className="font-headline">File Format Instructions</CardTitle>
-            <CardDescription>Ensure your Excel files have the correct columns for a successful import.</CardDescription>
+            <CardDescription>Ensure your file has the correct columns for a successful import. The first row should be the headers.</CardDescription>
           </CardHeader>
           <CardContent className="text-sm space-y-4">
             <div>
-              <h4 className="font-semibold mb-2">Purchase Information Sheet</h4>
+              <h4 className="font-semibold mb-2">Required Columns</h4>
               <p className="text-muted-foreground">Columns should be named exactly as follows:</p>
-              <ul className="list-disc pl-5 mt-1 text-muted-foreground">
-                <li>Quantity required</li>
-                <li>Title Composer; Lyricist; Arranger</li>
-                <li>Copyright Arrangement</li>
-                <li>Publisher/Distributor Catalog Number</li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-semibold mb-2">Inventory Sheet</h4>
-              <p className="text-muted-foreground">Columns should be named exactly as follows:</p>
-              <ul className="list-disc pl-5 mt-1 text-muted-foreground">
-                <li>Selection</li>
-                <li>Type</li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-semibold mb-2">Performance History Sheet</h4>
-              <p className="text-muted-foreground">Columns should be named exactly as follows:</p>
-              <ul className="list-disc pl-5 mt-1 text-muted-foreground">
-                <li>Song</li>
-                <li>Performed</li>
+              <ul className="list-disc pl-5 mt-1 text-muted-foreground space-y-1">
+                <li><span className="font-semibold text-foreground">Selection</span> - The title of the music piece.</li>
+                <li><span className="font-semibold text-foreground">Type</span> - The type of music (e.g., Choral, Orchestral).</li>
+                <li><span className="font-semibold text-foreground">Details (Composer, Lyricist, Arranger)</span> - All three roles in one cell, separated by semicolons. For example: "Ludwig van Beethoven; N/A; N/A".</li>
+                <li><span className="font-semibold text-foreground">Copyright / Arrangement</span> - The copyright information for the piece.</li>
               </ul>
             </div>
           </CardContent>

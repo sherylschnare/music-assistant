@@ -1,7 +1,8 @@
+
 "use client"
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   Home,
   Library,
@@ -71,6 +72,13 @@ function MainNav() {
 }
 
 function UserProfile() {
+  const router = useRouter();
+
+  const handleLogout = () => {
+    // In a real app, you would clear the session/token here
+    router.push("/");
+  };
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -102,7 +110,7 @@ function UserProfile() {
           <span>Settings</span>
         </DropdownMenuItem>
         <DropdownMenuSeparator />
-        <DropdownMenuItem>
+        <DropdownMenuItem onClick={handleLogout}>
           <LogOut className="mr-2 h-4 w-4" />
           <span>Log out</span>
         </DropdownMenuItem>

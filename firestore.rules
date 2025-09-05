@@ -1,9 +1,60 @@
+
 rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    match /{document=**} {
-      allow read, write: if true;
+
+    // Helper function to check if a user is authenticated
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    // Helper function to get the requesting user's data
+    function getRequestingUserData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+
+    // Helper function to check for specific roles
+    function isMusicDirector() {
+      return isAuthenticated() && getRequestingUserData().role == 'Music Director';
+    }
+
+    function isLibrarian() {
+        return isAuthenticated() && getRequestingUserData().role == 'Librarian';
+    }
+
+    // Users Collection Rules
+    match /users/{userId} {
+      // Any authenticated user can read user profiles
+      allow read: if isAuthenticated();
+      // Only the user themselves or a Music Director can update a profile
+      allow update: if isAuthenticated() && (request.auth.uid == userId || isMusicDirector());
+       // Only a Music Director can create or delete users
+      allow create, delete: if isMusicDirector();
+    }
+
+    // Songs Collection Rules
+    match /songs/{songId} {
+        // Any authenticated user can read songs
+        allow read: if isAuthenticated();
+        // Only Music Directors or Librarians can write/update/delete songs
+        allow write, update, delete: if isMusicDirector() || isLibrarian();
+    }
+
+    // Concerts Collection Rules
+    match /concerts/{concertId} {
+        // Any authenticated user can read concerts
+        allow read: if isAuthenticated();
+        // Only Music Directors or Librarians can write/update/delete concerts
+        allow write, update, delete: if isMusicDirector() || isLibrarian();
+    }
+
+    // Taxonomy (app-data) Rules
+    match /app-data/{docId} {
+        // Any authenticated user can read taxonomy data
+        allow read: if isAuthenticated();
+        // Only Music Directors can write/update/delete taxonomy
+        allow write, update, delete: if isMusicDirector();
     }
   }
 }

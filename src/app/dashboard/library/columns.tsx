@@ -103,6 +103,19 @@ export const columns: ColumnDef<Song>[] = [
     },
   },
   {
+    accessorKey: "subtypes",
+    header: "Subtypes",
+    cell: ({ row }) => {
+      const subtypes = row.getValue("subtypes") as string[];
+      if (!subtypes || subtypes.length === 0) return null;
+      return (
+        <div className="flex flex-wrap gap-1">
+            {subtypes.map(subtype => <Badge key={subtype} variant="outline">{subtype}</Badge>)}
+        </div>
+      )
+    },
+  },
+  {
     accessorKey: "lastPerformed",
     header: ({ column }) => {
         return (

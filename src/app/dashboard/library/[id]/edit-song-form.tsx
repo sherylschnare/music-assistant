@@ -36,7 +36,7 @@ const formSchema = z.object({
   copyright: z.string().optional(),
   catalogNumber: z.string().optional(),
   quantity: z.coerce.number().min(0, "Quantity cannot be negative.").optional(),
-  type: z.enum(["Choral", "Orchestral", "Band", "Solo", "Chamber", "Christmas"]),
+  type: z.string().min(1, "Please select a type."),
   subtypes: z.array(z.string()).optional(),
 })
 
@@ -45,7 +45,7 @@ type FormValues = z.infer<typeof formSchema>;
 export function EditSongForm({ song }: { song: Song }) {
   const [loading, setLoading] = React.useState(false)
   const { toast } = useToast()
-  const { songs, setSongs, musicSubtypes } = useUser();
+  const { songs, setSongs, musicTypes, musicSubtypes } = useUser();
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -58,7 +58,7 @@ export function EditSongForm({ song }: { song: Song }) {
       copyright: song.copyright || "",
       catalogNumber: song.catalogNumber || "",
       quantity: song.quantity || 0,
-      type: song.type || "Orchestral",
+      type: song.type || "",
       subtypes: song.subtypes || [],
     },
   })
@@ -210,12 +210,9 @@ export function EditSongForm({ song }: { song: Song }) {
                         </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                            <SelectItem value="Choral">Choral</SelectItem>
-                            <SelectItem value="Orchestral">Orchestral</SelectItem>
-                            <SelectItem value="Band">Band</SelectItem>
-                            <SelectItem value="Solo">Solo</SelectItem>
-                            <SelectItem value="Chamber">Chamber</SelectItem>
-                            <SelectItem value="Christmas">Christmas</SelectItem>
+                            {musicTypes.map(type => (
+                                <SelectItem key={type} value={type}>{type}</SelectItem>
+                            ))}
                         </SelectContent>
                     </Select>
                     <FormMessage />

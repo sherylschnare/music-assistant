@@ -27,7 +27,7 @@ export default function ConcertDetailsPage() {
     const params = useParams();
     const router = useRouter();
     const { toast } = useToast();
-    const { songs, concerts, setConcerts, musicSubtypes } = useUser();
+    const { songs, concerts, setConcerts, musicTypes, musicSubtypes } = useUser();
     const id = params.id as string;
 
     const [concert, setConcert] = React.useState<Concert | undefined>(undefined);
@@ -51,8 +51,6 @@ export default function ConcertDetailsPage() {
         }
     }, [id, concerts]);
 
-    const musicTypes = ["All", "Choral", "Orchestral", "Band", "Solo", "Chamber", "Christmas"];
-    
     const librarySongs = React.useMemo(() => {
         return songs
           .filter(song => {
@@ -270,6 +268,7 @@ export default function ConcertDetailsPage() {
                                                 <SelectValue placeholder="Filter by type" />
                                             </SelectTrigger>
                                             <SelectContent>
+                                                <SelectItem value="All">All</SelectItem>
                                                 {musicTypes.map(type => (
                                                     <SelectItem key={type} value={type}>{type}</SelectItem>
                                                 ))}

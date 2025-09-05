@@ -2,13 +2,10 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { collection, getDocs, doc, setDoc, onSnapshot, writeBatch, deleteDoc } from 'firebase/firestore';
+import { collection, getDocs, doc, setDoc, onSnapshot, writeBatch, getDoc, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import type { Song, User, Concert } from '@/lib/types';
 import { users as defaultUsers, songs as defaultSongs, concerts as defaultConcerts } from '@/lib/data';
-import { v4 as uuidv4 } from 'uuid';
-
-const baseSubtypes = ["Christmas", "Easter", "Spring", "Winter", "Fall", "Summer", "Celtic", "Pop"];
 
 interface UserContextType {
   user: User;
@@ -21,12 +18,17 @@ interface UserContextType {
   concerts: Concert[];
   setConcerts: (concerts: Concert[]) => void;
   loading: boolean;
+  musicTypes: string[];
+  setMusicTypes: (types: string[]) => void;
   musicSubtypes: string[];
+  setMusicSubtypes: (subtypes: string[]) => void;
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
 
 const defaultUser: User = defaultUsers[0];
+const baseSubtypes = ["Christmas", "Easter", "Spring", "Winter", "Fall", "Summer", "Celtic", "Pop"];
+const baseTypes = ["Choral", "Orchestral", "Band", "Solo", "Chamber", "Holiday"];
 
 async function seedInitialData() {
     console.log("Seeding initial data...");
@@ -35,6 +37,7 @@ async function seedInitialData() {
     const usersCollectionRef = collection(db, 'users');
     const songsCollectionRef = collection(db, 'songs');
     const concertsCollectionRef = collection(db, 'concerts');
+    const taxonomyDocRef = doc(db, 'app-data', 'taxonomy');
 
     const usersSnapshot = await getDocs(usersCollectionRef);
     if (usersSnapshot.empty) {
@@ -63,6 +66,12 @@ async function seedInitialData() {
         console.log("Seeding concerts...");
     }
 
+    const taxonomySnap = await getDoc(taxonomyDocRef);
+    if (!taxonomySnap.exists()) {
+        batch.set(taxonomyDocRef, { types: baseTypes, subtypes: baseSubtypes });
+        console.log("Seeding taxonomy...");
+    }
+
     await batch.commit();
     console.log("Initial data seeding complete.");
 }
@@ -72,6 +81,7 @@ async function clearFirestoreData() {
   const songsCollectionRef = collection(db, 'songs');
   const concertsCollectionRef = collection(db, 'concerts');
   const usersCollectionRef = collection(db, 'users');
+  const taxonomyDocRef = doc(db, 'app-data', 'taxonomy');
 
   const songsSnapshot = await getDocs(songsCollectionRef);
   const concertsSnapshot = await getDocs(concertsCollectionRef);
@@ -82,13 +92,14 @@ async function clearFirestoreData() {
   songsSnapshot.forEach(doc => batch.delete(doc.ref));
   concertsSnapshot.forEach(doc => batch.delete(doc.ref));
   usersSnapshot.forEach(doc => batch.delete(doc.ref));
+  batch.delete(taxonomyDocRef);
   
   await batch.commit();
   console.log("Firestore data cleared.");
   try {
-    localStorage.setItem('firestore_cleared', 'true');
+    localStorage.clear();
   } catch (e) {
-    console.error('Could not set firestore_cleared flag in local storage.', e)
+    console.error('Could not clear local storage.', e)
   }
 }
 
@@ -99,38 +110,31 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   const [songs, setSongsState] = useState<Song[]>([]);
   const [concerts, setConcertsState] = useState<Concert[]>([]);
   const [loading, setLoading] = useState(true);
-  const [musicSubtypes, setMusicSubtypes] = useState<string[]>(baseSubtypes);
+  const [musicTypes, setMusicTypesState] = useState<string[]>([]);
+  const [musicSubtypes, setMusicSubtypesState] = useState<string[]>([]);
 
   useEffect(() => {
     async function setup() {
-        let cleared = false;
-        try {
-          cleared = localStorage.getItem('firestore_cleared') === 'true';
-        } catch(e) {
-          console.error("Could not read firestore_cleared flag from local storage.", e);
-        }
-
-        if (!cleared) {
-          await clearFirestoreData();
-        }
-
+        // await clearFirestoreData();
         await seedInitialData();
 
         const usersUnsubscribe = onSnapshot(collection(db, "users"), (snapshot) => {
             const usersData = snapshot.docs.map(doc => doc.data() as User);
             setUsersState(usersData);
-            setLoading(false);
+            if(loading) setLoading(false);
         });
 
         const songsUnsubscribe = onSnapshot(collection(db, "songs"), (snapshot) => {
             const songsData = snapshot.docs.map(doc => doc.data() as Song);
             setSongsState(songsData);
+        });
 
-            const allSubtypes = new Set(baseSubtypes);
-            songsData.forEach(song => {
-                song.subtypes?.forEach(subtype => allSubtypes.add(subtype));
-            });
-            setMusicSubtypes(Array.from(allSubtypes).sort());
+        const taxonomyUnsubscribe = onSnapshot(doc(db, "app-data", "taxonomy"), (snapshot) => {
+            if (snapshot.exists()) {
+                const data = snapshot.data();
+                setMusicTypesState(data.types || []);
+                setMusicSubtypesState(data.subtypes || []);
+            }
         });
 
         const concertsUnsubscribe = onSnapshot(collection(db, "concerts"), async (snapshot) => {
@@ -187,16 +191,16 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
           setUserState(defaultUser);
         }
 
-
         return () => {
             usersUnsubscribe();
             songsUnsubscribe();
             concertsUnsubscribe();
+            taxonomyUnsubscribe();
         };
     }
 
     setup();
-  }, []);
+  }, [loading]);
 
   const setUsers = async (newUsers: User[]) => {
     try {
@@ -239,23 +243,16 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
 
   const setConcerts = async (newConcerts: Concert[]) => {
      try {
-      const batch = writeBatch(db);
       const concertsCollectionRef = collection(db, "concerts");
       const existingDocs = await getDocs(concertsCollectionRef);
-      const existingIds = existingDocs.docs.map(d => d.id);
       
       const batchDeletes = writeBatch(db);
-      const manualConcertIds = newConcerts.filter(c => !c.id.startsWith('hist-')).map(c => c.id);
-      
       existingDocs.forEach(doc => {
-          if(!manualConcertIds.includes(doc.id)) {
-             // Don't delete historical concerts from firestore
-          } else {
+        if (!newConcerts.some(c => c.id === doc.id && !c.id.startsWith('hist-'))) {
             batchDeletes.delete(doc.ref);
-          }
+        }
       });
       await batchDeletes.commit();
-
 
       const batchSets = writeBatch(db);
       newConcerts.forEach(c => {
@@ -285,7 +282,33 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     }
   }
 
-  const value = { user, setUser: updateUser, users, setUsers, songs, setSongs, addSongs, concerts, setConcerts, loading, musicSubtypes };
+  const setMusicTypes = async (types: string[]) => {
+    try {
+      const taxonomyDocRef = doc(db, 'app-data', 'taxonomy');
+      await updateDoc(taxonomyDocRef, { types });
+    } catch (e) {
+      console.error("Failed to update music types", e);
+    }
+  }
+
+  const setMusicSubtypes = async (subtypes: string[]) => {
+    try {
+      const taxonomyDocRef = doc(db, 'app-data', 'taxonomy');
+      await updateDoc(taxonomyDocRef, { subtypes });
+    } catch (e) {
+      console.error("Failed to update music subtypes", e);
+    }
+  }
+
+  const value = { 
+    user, setUser: updateUser, 
+    users, setUsers, 
+    songs, setSongs, addSongs, 
+    concerts, setConcerts, 
+    loading, 
+    musicTypes, setMusicTypes,
+    musicSubtypes, setMusicSubtypes 
+  };
 
   return (
     <UserContext.Provider value={value}>

@@ -1,3 +1,4 @@
+
 export type Song = {
   id: string;
   title: string;
@@ -8,7 +9,7 @@ export type Song = {
   publisher: string;
   catalogNumber: string;
   quantity: number;
-  type: 'Choral' | 'Orchestral' | 'Band' | 'Solo' | 'Chamber' | 'Christmas';
+  type: string;
   subtypes?: string[];
   lastPerformed?: string;
   performanceHistory: { date: string; concertName: string }[];

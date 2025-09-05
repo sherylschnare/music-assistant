@@ -38,7 +38,7 @@ import Link from "next/link"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 
 function CreateConcertDialog() {
-  const { songs, concerts, setConcerts, musicSubtypes } = useUser();
+  const { songs, concerts, setConcerts, musicTypes, musicSubtypes } = useUser();
   const [open, setOpen] = React.useState(false)
   const [date, setDate] = React.useState<Date>()
   const [concertName, setConcertName] = React.useState("")
@@ -46,8 +46,6 @@ function CreateConcertDialog() {
   const [searchTerm, setSearchTerm] = React.useState("");
   const [typeFilter, setTypeFilter] = React.useState("All");
   const [subtypeFilter, setSubtypeFilter] = React.useState("All");
-
-  const musicTypes = ["All", "Choral", "Orchestral", "Band", "Solo", "Chamber", "Christmas"];
 
   const librarySongs = React.useMemo(() => {
     return songs
@@ -237,6 +235,7 @@ function CreateConcertDialog() {
                                 <SelectValue placeholder="Filter by type" />
                             </SelectTrigger>
                             <SelectContent>
+                                <SelectItem value="All">All</SelectItem>
                                 {musicTypes.map(type => (
                                     <SelectItem key={type} value={type}>{type}</SelectItem>
                                 ))}
@@ -355,4 +354,3 @@ export default function ConcertsPage() {
     </div>
   )
 }
-    

@@ -49,12 +49,12 @@ export default function ImportPage() {
               title: row.Title || '',
               composer: row.Composer || '',
               copyright: row.Copyright || '',
-              type: row.Type ? 'Choral' : 'Orchestral', // Basic logic, can be improved
-              lyricist: '',
-              arranger: '',
-              publisher: '',
-              catalogNumber: '',
-              quantity: 0,
+              type: row.Type || 'Uncategorized',
+              lyricist: row.Lyricist || '',
+              arranger: row.Arranger || '',
+              publisher: row.Publisher || '',
+              catalogNumber: row.CatalogNumber || '',
+              quantity: parseInt(row.Quantity, 10) || 0,
               performanceHistory: [],
             };
           }).filter(song => song.title); // Filter out rows without a title
@@ -99,7 +99,7 @@ export default function ImportPage() {
         <CardHeader>
           <CardTitle>Upload CSV File</CardTitle>
           <CardDescription>
-            The CSV file should have columns for at least 'Title', 'Composer', and 'Copyright'.
+            The CSV file should have columns for at least 'Title', 'Composer', and 'Copyright'. Other supported columns: Type, Lyricist, Arranger, Publisher, CatalogNumber, Quantity.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">

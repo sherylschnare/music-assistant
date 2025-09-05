@@ -5,7 +5,6 @@ import * as React from 'react'
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
-import { v4 as uuidv4 } from 'uuid'
 import { Plus, X } from "lucide-react"
 
 import {
@@ -45,7 +44,7 @@ const formSchema = z.object({
   copyright: z.string().optional(),
   catalogNumber: z.string().optional(),
   quantity: z.coerce.number().min(0, "Quantity cannot be negative.").optional(),
-  type: z.enum(["Choral", "Orchestral", "Band", "Solo", "Chamber", "Christmas"]),
+  type: z.string().min(1, "Please select a type."),
   subtypes: z.array(z.string()).optional(),
 })
 
@@ -59,7 +58,7 @@ interface SongFormDialogProps {
 export function SongFormDialog({ onSave, trigger }: SongFormDialogProps) {
   const [isOpen, setIsOpen] = React.useState(false)
   const { toast } = useToast()
-  const { musicSubtypes } = useUser()
+  const { musicTypes, musicSubtypes } = useUser()
 
   const form = useForm<SongFormValues>({
     resolver: zodResolver(formSchema),
@@ -72,7 +71,7 @@ export function SongFormDialog({ onSave, trigger }: SongFormDialogProps) {
         copyright: "",
         catalogNumber: "",
         quantity: 0,
-        type: "Orchestral",
+        type: undefined,
         subtypes: [],
     }
   })
@@ -223,12 +222,9 @@ export function SongFormDialog({ onSave, trigger }: SongFormDialogProps) {
                             </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                                <SelectItem value="Choral">Choral</SelectItem>
-                                <SelectItem value="Orchestral">Orchestral</SelectItem>
-                                <SelectItem value="Band">Band</SelectItem>
-                                <SelectItem value="Solo">Solo</SelectItem>
-                                <SelectItem value="Chamber">Chamber</SelectItem>
-                                <SelectItem value="Christmas">Christmas</SelectItem>
+                                {musicTypes.map(type => (
+                                    <SelectItem key={type} value={type}>{type}</SelectItem>
+                                ))}
                             </SelectContent>
                         </Select>
                         <FormMessage />

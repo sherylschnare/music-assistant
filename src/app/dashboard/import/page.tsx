@@ -67,8 +67,9 @@ export default function ImportPage() {
               if (row.CatalogNumber) updatedSong.catalogNumber = row.CatalogNumber;
               if (row.Quantity) updatedSong.quantity = parseInt(row.Quantity, 10) || existingSong.quantity;
               
-              const combinedSubtypes = new Set([...(existingSong.subtypes || []), ...subtypes]);
-              updatedSong.subtypes = Array.from(combinedSubtypes);
+              if (row.Subtypes) {
+                updatedSong.subtypes = subtypes;
+              }
 
               songsMap.set(existingSong.id, updatedSong);
               updatedCount++;

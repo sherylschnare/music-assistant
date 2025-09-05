@@ -97,12 +97,7 @@ body {
     display: none !important;
   }
 
-  #app-container > .print\:hidden {
-    display: none !important;
-  }
-
-  #app-container > main {
-    display: block !important;
+  main {
     padding: 0;
     margin: 1rem;
   }

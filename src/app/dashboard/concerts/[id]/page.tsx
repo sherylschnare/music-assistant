@@ -112,13 +112,11 @@ export default function ConcertDetailsPage() {
         )
     }
 
-    const isPast = new Date(concert.date) < new Date();
-
     return (
         <div>
             <PageHeader
                 title={concert.name}
-                description={isPast ? "Viewing past concert program" : "Editing concert program"}
+                description={"Editing concert program"}
             >
                  <Button variant="outline" asChild>
                     <Link href="/dashboard/concerts">
@@ -140,61 +138,60 @@ export default function ConcertDetailsPage() {
                         <div>
                             <h3 className="text-lg font-semibold mb-4">Program Details</h3>
                             <div className="grid gap-4">
-                            <div className="grid grid-cols-4 items-center gap-4">
-                                <Label htmlFor="name" className="text-right">
-                                Name
-                                </Label>
-                                <Input 
-                                id="name" 
-                                className="col-span-3"
-                                value={concertName}
-                                onChange={(e) => setConcertName(e.target.value)}
-                                disabled={isLocked}
-                                />
-                            </div>
-                            <div className="grid grid-cols-4 items-center gap-4">
-                                <Label htmlFor="date" className="text-right">
-                                Date
-                                </Label>
-                                <Popover>
-                                <PopoverTrigger asChild>
-                                    <Button
-                                    variant={"outline"}
-                                    className={cn(
-                                        "w-[280px] justify-start text-left font-normal",
-                                        !date && "text-muted-foreground"
-                                    )}
-                                    disabled={isLocked}
-                                    >
-                                    <CalendarIcon className="mr-2 h-4 w-4" />
-                                    {date ? format(date, "PPP") : <span>Pick a date</span>}
-                                    </Button>
-                                </PopoverTrigger>
-                                <PopoverContent className="w-auto p-0">
-                                    <Calendar
-                                    mode="single"
-                                    selected={date}
-                                    onSelect={setDate}
-                                    initialFocus
-                                    />
-                                </PopoverContent>
-                                </Popover>
-                            </div>
-                             <div className="grid grid-cols-4 items-center gap-4">
-                                <Label htmlFor="lock-concert" className="text-right">
-                                    Lock Program
-                                </Label>
-                                <div className="col-span-3 flex items-center space-x-2">
-                                     <Switch 
-                                        id="lock-concert"
-                                        checked={isLocked}
-                                        onCheckedChange={setIsLocked}
-                                    />
-                                    <Label htmlFor="lock-concert" className="text-sm text-muted-foreground">
-                                        Prevent further edits
+                                <div className="grid grid-cols-[100px_1fr] items-center gap-4">
+                                    <Label htmlFor="name" className="text-right">
+                                    Name
                                     </Label>
+                                    <Input 
+                                    id="name" 
+                                    value={concertName}
+                                    onChange={(e) => setConcertName(e.target.value)}
+                                    disabled={isLocked}
+                                    />
                                 </div>
-                            </div>
+                                <div className="grid grid-cols-[100px_1fr] items-center gap-4">
+                                    <Label htmlFor="date" className="text-right">
+                                    Date
+                                    </Label>
+                                    <Popover>
+                                    <PopoverTrigger asChild>
+                                        <Button
+                                        variant={"outline"}
+                                        className={cn(
+                                            "w-full justify-start text-left font-normal",
+                                            !date && "text-muted-foreground"
+                                        )}
+                                        disabled={isLocked}
+                                        >
+                                        <CalendarIcon className="mr-2 h-4 w-4" />
+                                        {date ? format(date, "PPP") : <span>Pick a date</span>}
+                                        </Button>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="w-auto p-0">
+                                        <Calendar
+                                        mode="single"
+                                        selected={date}
+                                        onSelect={setDate}
+                                        initialFocus
+                                        />
+                                    </PopoverContent>
+                                    </Popover>
+                                </div>
+                                 <div className="grid grid-cols-[100px_1fr] items-center gap-4">
+                                    <Label htmlFor="lock-concert" className="text-right">
+                                        Lock Program
+                                    </Label>
+                                    <div className="flex items-center space-x-2">
+                                         <Switch 
+                                            id="lock-concert"
+                                            checked={isLocked}
+                                            onCheckedChange={setIsLocked}
+                                        />
+                                        <Label htmlFor="lock-concert" className="text-sm text-muted-foreground">
+                                            Prevent further edits
+                                        </Label>
+                                    </div>
+                                </div>
                             </div>
                             <h3 className="text-lg font-semibold mt-8 mb-4">Program Order</h3>
                             <ScrollArea className="h-72 w-full rounded-md border">
@@ -279,7 +276,7 @@ export default function ConcertDetailsPage() {
                             <div className="flex items-center justify-center h-full rounded-md border border-dashed">
                                 <div className="text-center text-muted-foreground">
                                     <p>This concert is locked.</p>
-                                    <p className="text-xs">Editing is disabled for past or locked concerts.</p>
+                                    <p className="text-xs">Editing is disabled.</p>
                                 </div>
                             </div>
                         )}

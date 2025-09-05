@@ -99,7 +99,7 @@ export default function ImportHistoryPage() {
 
             if (!songTitle || !performed) return;
 
-            const songToUpdate = [...updatedSongs.values()].find(s => s.title.toLowerCase() === songTitle.toLowerCase());
+            const songToUpdate = [...updatedSongs.values()].find(s => s.title.trim().toLowerCase() === songTitle.toLowerCase());
             
             if (songToUpdate) {
                 matchedCount++;
@@ -197,4 +197,3 @@ export default function ImportHistoryPage() {
     </div>
   );
 }
-

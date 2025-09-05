@@ -49,9 +49,10 @@ export default function ImportPage() {
           let updatedCount = 0;
 
           results.data.forEach((row: any) => {
-            if (!row.Title) return;
+            const rowTitle = row.Title?.trim();
+            if (!rowTitle) return;
 
-            const existingSong = [...songsMap.values()].find(s => s.title.toLowerCase() === row.Title.toLowerCase());
+            const existingSong = [...songsMap.values()].find(s => s.title.trim().toLowerCase() === rowTitle.toLowerCase());
 
             const subtypes = row.Subtypes ? row.Subtypes.split(',').map((s: string) => s.trim()) : [];
 
@@ -77,7 +78,7 @@ export default function ImportPage() {
               // Create new song
               const newSong: Song = {
                 id: uuidv4(),
-                title: row.Title,
+                title: rowTitle,
                 composer: row.Composer || '',
                 copyright: row.Copyright || '',
                 type: row.Type || 'Uncategorized',

@@ -2,7 +2,7 @@
 'use client'
 
 import * as React from "react"
-import { Plus, Calendar as CalendarIcon, ListMusic, ArrowUp, ArrowDown, X } from "lucide-react"
+import { Plus, Calendar as CalendarIcon, ListMusic, ArrowUp, ArrowDown, X, Search } from "lucide-react"
 import {
   Card,
   CardContent,
@@ -33,6 +33,8 @@ import { format } from "date-fns"
 import { cn } from "@/lib/utils"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Checkbox } from "@/components/ui/checkbox"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+
 
 function CreateConcertDialog() {
   const { songs, concerts, setConcerts } = useUser();
@@ -40,8 +42,21 @@ function CreateConcertDialog() {
   const [date, setDate] = React.useState<Date>()
   const [concertName, setConcertName] = React.useState("")
   const [program, setProgram] = React.useState<Song[]>([])
+  const [searchTerm, setSearchTerm] = React.useState("");
+  const [typeFilter, setTypeFilter] = React.useState("All");
 
-  const librarySongs = songs;
+  const musicTypes = ["All", "Choral", "Orchestral", "Band", "Solo", "Chamber"];
+
+  const librarySongs = React.useMemo(() => {
+    return songs
+      .filter(song => {
+        const matchesType = typeFilter === "All" || song.type === typeFilter;
+        const matchesSearch = song.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                              song.composer.toLowerCase().includes(searchTerm.toLowerCase());
+        return matchesType && matchesSearch;
+      });
+  }, [songs, typeFilter, searchTerm]);
+
 
   const handleToggleSongInLibrary = (song: Song) => {
     setProgram(prevProgram => {
@@ -178,7 +193,29 @@ function CreateConcertDialog() {
             </div>
             <div>
                  <h3 className="text-lg font-semibold mb-4">Music Library</h3>
-                 <ScrollArea className="h-[500px] w-full rounded-md border">
+                 <div className="flex gap-2 mb-4">
+                    <div className="relative flex-1">
+                        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                        <Input
+                            type="search"
+                            placeholder="Search title or composer..."
+                            className="pl-8"
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                        />
+                    </div>
+                    <Select value={typeFilter} onValueChange={setTypeFilter}>
+                        <SelectTrigger className="w-[180px]">
+                            <SelectValue placeholder="Filter by type" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {musicTypes.map(type => (
+                                <SelectItem key={type} value={type}>{type}</SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                 </div>
+                 <ScrollArea className="h-[428px] w-full rounded-md border">
                     <div className="p-4 space-y-2">
                     {librarySongs.map(song => {
                         const isSelected = program.some(p => p.id === song.id);

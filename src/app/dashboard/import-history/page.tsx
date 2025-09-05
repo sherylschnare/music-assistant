@@ -131,7 +131,7 @@ export default function ImportHistoryPage() {
           await batch.commit();
 
           // This will trigger a re-fetch in the context
-          setSongs(Array.from(updatedSongs.values()));
+          // Note: The context listener will update the state automatically, no need to call setSongs here.
 
           toast({
             title: "Import successful",

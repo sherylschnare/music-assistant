@@ -49,7 +49,7 @@ export default function ImportPage() {
           let updatedCount = 0;
 
           results.data.forEach((row: any) => {
-            const rowTitle = row.Title?.trim();
+            const rowTitle = row.Selection?.trim(); // Use 'Selection' column
             if (!rowTitle) return;
 
             const existingSong = [...songsMap.values()].find(s => s.title.trim().toLowerCase() === rowTitle.toLowerCase());
@@ -135,7 +135,7 @@ export default function ImportPage() {
         <CardHeader>
           <CardTitle>Upload CSV File</CardTitle>
           <CardDescription>
-            The CSV file should have a 'Title' column. It will update existing songs or create new ones. Supported columns: Composer, Copyright, Type, Lyricist, Arranger, Publisher, CatalogNumber, Quantity, Subtypes (comma-separated).
+            The CSV file should have a 'Selection' or 'Title' column. It will update existing songs or create new ones. Supported columns: Composer, Copyright, Type, Lyricist, Arranger, Publisher, CatalogNumber, Quantity, Subtypes (comma-separated).
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">

@@ -23,13 +23,11 @@ import { Switch } from "@/components/ui/switch"
 import { useToast } from "@/hooks/use-toast"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 
-const musicSubtypes = ["All", "Christmas", "Easter", "Spring", "Winter", "Fall", "Summer", "Celtic", "Pop"];
-
 export default function ConcertDetailsPage() {
     const params = useParams();
     const router = useRouter();
     const { toast } = useToast();
-    const { songs, concerts, setConcerts } = useUser();
+    const { songs, concerts, setConcerts, musicSubtypes } = useUser();
     const id = params.id as string;
 
     const [concert, setConcert] = React.useState<Concert | undefined>(undefined);
@@ -282,6 +280,7 @@ export default function ConcertDetailsPage() {
                                                 <SelectValue placeholder="Filter by subtype" />
                                             </SelectTrigger>
                                             <SelectContent>
+                                                <SelectItem value="All">All</SelectItem>
                                                 {musicSubtypes.map(type => (
                                                     <SelectItem key={type} value={type}>{type}</SelectItem>
                                                 ))}

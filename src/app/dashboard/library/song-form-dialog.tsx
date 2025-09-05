@@ -28,16 +28,13 @@ import {
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command'
 import { Badge } from '@/components/ui/badge'
-import { Checkbox } from '@/components/ui/checkbox'
+import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
+import { ScrollArea } from '@/components/ui/scroll-area'
 
 import type { Song } from '@/lib/types'
 import { useToast } from '@/hooks/use-toast'
-import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
-
-const musicSubtypes = ["Christmas", "Easter", "Spring", "Winter", "Fall", "Summer", "Celtic", "Pop"];
+import { useUser } from '@/context/user-context'
 
 const formSchema = z.object({
   title: z.string().min(2, "Title must be at least 2 characters."),
@@ -62,6 +59,7 @@ interface SongFormDialogProps {
 export function SongFormDialog({ onSave, trigger }: SongFormDialogProps) {
   const [isOpen, setIsOpen] = React.useState(false)
   const { toast } = useToast()
+  const { musicSubtypes } = useUser()
 
   const form = useForm<SongFormValues>({
     resolver: zodResolver(formSchema),
@@ -250,6 +248,7 @@ export function SongFormDialog({ onSave, trigger }: SongFormDialogProps) {
                                     </Button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent className="w-64">
+                                  <ScrollArea className="h-48">
                                     {musicSubtypes.map(subtype => (
                                         <DropdownMenuCheckboxItem
                                             key={subtype}
@@ -266,6 +265,7 @@ export function SongFormDialog({ onSave, trigger }: SongFormDialogProps) {
                                             {subtype}
                                         </DropdownMenuCheckboxItem>
                                     ))}
+                                  </ScrollArea>
                                 </DropdownMenuContent>
                             </DropdownMenu>
                              <div className="flex flex-wrap gap-2 pt-2">

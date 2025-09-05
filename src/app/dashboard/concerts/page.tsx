@@ -37,10 +37,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import Link from "next/link"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 
-const musicSubtypes = ["All", "Christmas", "Easter", "Spring", "Winter", "Fall", "Summer", "Celtic", "Pop"];
-
 function CreateConcertDialog() {
-  const { songs, concerts, setConcerts } = useUser();
+  const { songs, concerts, setConcerts, musicSubtypes } = useUser();
   const [open, setOpen] = React.useState(false)
   const [date, setDate] = React.useState<Date>()
   const [concertName, setConcertName] = React.useState("")
@@ -249,9 +247,10 @@ function CreateConcertDialog() {
                                 <SelectValue placeholder="Filter by subtype" />
                             </SelectTrigger>
                             <SelectContent>
-                                {musicSubtypes.map(type => (
-                                    <SelectItem key={type} value={type}>{type}</SelectItem>
-                                ))}
+                              <SelectItem value="All">All</SelectItem>
+                              {musicSubtypes.map(type => (
+                                  <SelectItem key={type} value={type}>{type}</SelectItem>
+                              ))}
                             </SelectContent>
                         </Select>
                       </div>

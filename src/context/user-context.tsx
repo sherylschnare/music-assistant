@@ -8,6 +8,8 @@ import type { Song, User, Concert } from '@/lib/types';
 import { users as defaultUsers, songs as defaultSongs, concerts as defaultConcerts } from '@/lib/data';
 import { v4 as uuidv4 } from 'uuid';
 
+const baseSubtypes = ["Christmas", "Easter", "Spring", "Winter", "Fall", "Summer", "Celtic", "Pop"];
+
 interface UserContextType {
   user: User;
   setUser: (user: Partial<User>) => void;
@@ -19,6 +21,7 @@ interface UserContextType {
   concerts: Concert[];
   setConcerts: (concerts: Concert[]) => void;
   loading: boolean;
+  musicSubtypes: string[];
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
@@ -96,6 +99,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   const [songs, setSongsState] = useState<Song[]>([]);
   const [concerts, setConcertsState] = useState<Concert[]>([]);
   const [loading, setLoading] = useState(true);
+  const [musicSubtypes, setMusicSubtypes] = useState<string[]>(baseSubtypes);
 
   useEffect(() => {
     async function setup() {
@@ -121,12 +125,17 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         const songsUnsubscribe = onSnapshot(collection(db, "songs"), (snapshot) => {
             const songsData = snapshot.docs.map(doc => doc.data() as Song);
             setSongsState(songsData);
+
+            const allSubtypes = new Set(baseSubtypes);
+            songsData.forEach(song => {
+                song.subtypes?.forEach(subtype => allSubtypes.add(subtype));
+            });
+            setMusicSubtypes(Array.from(allSubtypes).sort());
         });
 
         const concertsUnsubscribe = onSnapshot(collection(db, "concerts"), async (snapshot) => {
             const concertsData = snapshot.docs.map(doc => doc.data() as Concert);
             
-            // Reconstruct concerts from performance history
             const songsSnapshot = await getDocs(collection(db, "songs"));
             const allSongs = songsSnapshot.docs.map(doc => doc.data() as Song);
 
@@ -141,7 +150,6 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
                                 pieces: [],
                             };
                         }
-                        // Avoid adding duplicate songs to the same concert
                         if (!historicalConcerts[perf.concertName].pieces.some(p => p.id === song.id)) {
                             historicalConcerts[perf.concertName].pieces.push(song);
                         }
@@ -154,9 +162,9 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
                 name,
                 date: data.date,
                 pieces: data.pieces,
+                isLocked: true,
             }));
 
-            // Combine manually created concerts with reconstructed ones
             const combinedConcerts = [...concertsData];
             reconstructedConcerts.forEach(histConcert => {
                 if (!combinedConcerts.some(c => c.id === histConcert.id)) {
@@ -206,11 +214,6 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   const setSongs = async (newSongs: Song[]) => {
     try {
         const batch = writeBatch(db);
-        const songsCollectionRef = collection(db, "songs");
-
-        const existingDocs = await getDocs(songsCollectionRef);
-        existingDocs.forEach(doc => batch.delete(doc.ref));
-
         newSongs.forEach(s => {
             const docRef = doc(db, 'songs', s.id);
             batch.set(docRef, s);
@@ -237,11 +240,32 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   const setConcerts = async (newConcerts: Concert[]) => {
      try {
       const batch = writeBatch(db);
-      newConcerts.forEach(c => {
-        const docRef = doc(db, 'concerts', c.id);
-        batch.set(docRef, c);
+      const concertsCollectionRef = collection(db, "concerts");
+      const existingDocs = await getDocs(concertsCollectionRef);
+      const existingIds = existingDocs.docs.map(d => d.id);
+      
+      const batchDeletes = writeBatch(db);
+      const manualConcertIds = newConcerts.filter(c => !c.id.startsWith('hist-')).map(c => c.id);
+      
+      existingDocs.forEach(doc => {
+          if(!manualConcertIds.includes(doc.id)) {
+             // Don't delete historical concerts from firestore
+          } else {
+            batchDeletes.delete(doc.ref);
+          }
       });
-      await batch.commit();
+      await batchDeletes.commit();
+
+
+      const batchSets = writeBatch(db);
+      newConcerts.forEach(c => {
+        if (!c.id.startsWith('hist-')) {
+          const docRef = doc(db, 'concerts', c.id);
+          batchSets.set(docRef, c);
+        }
+      });
+      await batchSets.commit();
+
     } catch (error) {
       console.error("Failed to save concerts to Firestore", error);
     }
@@ -261,7 +285,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     }
   }
 
-  const value = { user, setUser: updateUser, users, setUsers, songs, setSongs, addSongs, concerts, setConcerts, loading };
+  const value = { user, setUser: updateUser, users, setUsers, songs, setSongs, addSongs, concerts, setConcerts, loading, musicSubtypes };
 
   return (
     <UserContext.Provider value={value}>

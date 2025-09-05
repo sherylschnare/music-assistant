@@ -24,8 +24,8 @@ import { Loader2 } from "lucide-react"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Badge } from "@/components/ui/badge"
+import { ScrollArea } from "@/components/ui/scroll-area"
 
-const musicSubtypes = ["Christmas", "Easter", "Spring", "Winter", "Fall", "Summer", "Celtic", "Pop"];
 
 const formSchema = z.object({
   title: z.string().min(2, "Title must be at least 2 characters."),
@@ -45,7 +45,7 @@ type FormValues = z.infer<typeof formSchema>;
 export function EditSongForm({ song }: { song: Song }) {
   const [loading, setLoading] = React.useState(false)
   const { toast } = useToast()
-  const { songs, setSongs } = useUser();
+  const { songs, setSongs, musicSubtypes } = useUser();
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -235,6 +235,7 @@ export function EditSongForm({ song }: { song: Song }) {
                                 </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent className="w-64">
+                                <ScrollArea className="h-48">
                                 {musicSubtypes.map(subtype => (
                                     <DropdownMenuCheckboxItem
                                         key={subtype}
@@ -251,6 +252,7 @@ export function EditSongForm({ song }: { song: Song }) {
                                         {subtype}
                                     </DropdownMenuCheckboxItem>
                                 ))}
+                                </ScrollArea>
                             </DropdownMenuContent>
                         </DropdownMenu>
                          <div className="flex flex-wrap gap-2 pt-2 min-h-6">

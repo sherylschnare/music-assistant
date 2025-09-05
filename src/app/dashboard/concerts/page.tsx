@@ -35,6 +35,7 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import Link from "next/link"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 
 
 function CreateConcertDialog() {
@@ -218,26 +219,48 @@ function CreateConcertDialog() {
                           </SelectContent>
                       </Select>
                   </div>
+                  <TooltipProvider>
                   <ScrollArea className="h-[428px] w-full rounded-md border">
                       <div className="p-4 space-y-2">
                       {librarySongs.map(song => {
                           const isSelected = program.some(p => p.id === song.id);
                           return (
-                              <div key={song.id} className="flex items-center space-x-2 p-2 rounded-md hover:bg-muted">
-                              <Checkbox
-                                  id={`song-${song.id}`}
-                                  checked={isSelected}
-                                  onCheckedChange={() => handleToggleSongInLibrary(song)}
-                              />
-                              <label htmlFor={`song-${song.id}`} className="flex-1 cursor-pointer">
-                                  <p className="text-sm font-medium">{song.title}</p>
-                                  <p className="text-xs text-muted-foreground">{song.composer}</p>
-                              </label>
-                              </div>
+                            <Tooltip key={song.id}>
+                                <TooltipTrigger asChild>
+                                    <div className="flex items-center space-x-2 p-2 rounded-md hover:bg-muted">
+                                    <Checkbox
+                                        id={`song-${song.id}`}
+                                        checked={isSelected}
+                                        onCheckedChange={() => handleToggleSongInLibrary(song)}
+                                    />
+                                    <label htmlFor={`song-${song.id}`} className="flex-1 cursor-pointer">
+                                        <p className="text-sm font-medium">{song.title}</p>
+                                        <p className="text-xs text-muted-foreground">{song.composer}</p>
+                                    </label>
+                                    </div>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                    <div className="p-2 text-sm">
+                                        <h4 className="font-bold mb-2">Performance History</h4>
+                                        {song.performanceHistory && song.performanceHistory.length > 0 ? (
+                                            <ul className="list-disc pl-4 space-y-1">
+                                            {song.performanceHistory
+                                                .sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+                                                .map((perf, index) => (
+                                                <li key={index}>{perf.concertName} ({new Date(perf.date).getFullYear()})</li>
+                                            ))}
+                                            </ul>
+                                        ) : (
+                                            <p>No performances recorded.</p>
+                                        )}
+                                    </div>
+                                </TooltipContent>
+                            </Tooltip>
                           )
                       })}
                       </div>
                   </ScrollArea>
+                  </TooltipProvider>
               </div>
           </div>
         </div>

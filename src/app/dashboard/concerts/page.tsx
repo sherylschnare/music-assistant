@@ -37,6 +37,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import Link from "next/link"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 
+const musicSubtypes = ["All", "Christmas", "Easter", "Spring", "Winter", "Fall", "Summer", "Celtic", "Pop"];
 
 function CreateConcertDialog() {
   const { songs, concerts, setConcerts } = useUser();
@@ -46,6 +47,7 @@ function CreateConcertDialog() {
   const [program, setProgram] = React.useState<Song[]>([])
   const [searchTerm, setSearchTerm] = React.useState("");
   const [typeFilter, setTypeFilter] = React.useState("All");
+  const [subtypeFilter, setSubtypeFilter] = React.useState("All");
 
   const musicTypes = ["All", "Choral", "Orchestral", "Band", "Solo", "Chamber", "Christmas"];
 
@@ -53,11 +55,12 @@ function CreateConcertDialog() {
     return songs
       .filter(song => {
         const matchesType = typeFilter === "All" || song.type === typeFilter;
+        const matchesSubtype = subtypeFilter === "All" || (song.subtypes && song.subtypes.includes(subtypeFilter));
         const matchesSearch = song.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
                               song.composer.toLowerCase().includes(searchTerm.toLowerCase());
-        return matchesType && matchesSearch;
+        return matchesType && matchesSearch && matchesSubtype;
       });
-  }, [songs, typeFilter, searchTerm]);
+  }, [songs, typeFilter, subtypeFilter, searchTerm]);
 
 
   const handleToggleSongInLibrary = (song: Song) => {
@@ -219,7 +222,7 @@ function CreateConcertDialog() {
               </div>
               <div>
                   <h3 className="text-lg font-semibold mb-4">Music Library</h3>
-                  <div className="flex gap-2 mb-4">
+                  <div className="flex flex-col gap-2 mb-4">
                       <div className="relative flex-1">
                           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                           <Input
@@ -230,16 +233,28 @@ function CreateConcertDialog() {
                               onChange={(e) => setSearchTerm(e.target.value)}
                           />
                       </div>
-                      <Select value={typeFilter} onValueChange={setTypeFilter}>
-                          <SelectTrigger className="w-[180px]">
-                              <SelectValue placeholder="Filter by type" />
-                          </SelectTrigger>
-                          <SelectContent>
-                              {musicTypes.map(type => (
-                                  <SelectItem key={type} value={type}>{type}</SelectItem>
-                              ))}
-                          </SelectContent>
-                      </Select>
+                      <div className="flex gap-2">
+                        <Select value={typeFilter} onValueChange={setTypeFilter}>
+                            <SelectTrigger className="flex-1">
+                                <SelectValue placeholder="Filter by type" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {musicTypes.map(type => (
+                                    <SelectItem key={type} value={type}>{type}</SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                         <Select value={subtypeFilter} onValueChange={setSubtypeFilter}>
+                            <SelectTrigger className="flex-1">
+                                <SelectValue placeholder="Filter by subtype" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {musicSubtypes.map(type => (
+                                    <SelectItem key={type} value={type}>{type}</SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                      </div>
                   </div>
                   <TooltipProvider>
                   <ScrollArea className="h-[428px] w-full rounded-md border">

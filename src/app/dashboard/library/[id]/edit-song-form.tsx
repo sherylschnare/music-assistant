@@ -8,6 +8,7 @@ import React from "react"
 import { useToast } from "@/hooks/use-toast"
 import { useUser } from "@/context/user-context"
 import type { Song } from "@/lib/types"
+import { X } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -21,7 +22,10 @@ import {
 import { Input } from "@/components/ui/input"
 import { Loader2 } from "lucide-react"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Textarea } from "@/components/ui/textarea"
+import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { Badge } from "@/components/ui/badge"
+
+const musicSubtypes = ["Christmas", "Easter", "Spring", "Winter", "Fall", "Summer", "Celtic", "Pop"];
 
 const formSchema = z.object({
   title: z.string().min(2, "Title must be at least 2 characters."),
@@ -32,7 +36,8 @@ const formSchema = z.object({
   copyright: z.string().optional(),
   catalogNumber: z.string().optional(),
   quantity: z.coerce.number().min(0, "Quantity cannot be negative.").optional(),
-  type: z.enum(["Choral", "Orchestral", "Band", "Solo", "Chamber"]),
+  type: z.enum(["Choral", "Orchestral", "Band", "Solo", "Chamber", "Christmas"]),
+  subtypes: z.array(z.string()).optional(),
 })
 
 type FormValues = z.infer<typeof formSchema>;
@@ -54,6 +59,7 @@ export function EditSongForm({ song }: { song: Song }) {
       catalogNumber: song.catalogNumber || "",
       quantity: song.quantity || 0,
       type: song.type || "Orchestral",
+      subtypes: song.subtypes || [],
     },
   })
 
@@ -80,6 +86,8 @@ export function EditSongForm({ song }: { song: Song }) {
         setLoading(false)
     }
   }
+
+  const subtypes = form.watch("subtypes") || [];
 
   return (
     <Form {...form}>
@@ -207,9 +215,59 @@ export function EditSongForm({ song }: { song: Song }) {
                             <SelectItem value="Band">Band</SelectItem>
                             <SelectItem value="Solo">Solo</SelectItem>
                             <SelectItem value="Chamber">Chamber</SelectItem>
+                            <SelectItem value="Christmas">Christmas</SelectItem>
                         </SelectContent>
                     </Select>
                     <FormMessage />
+                    </FormItem>
+                )}
+            />
+            <FormField
+                control={form.control}
+                name="subtypes"
+                render={({ field }) => (
+                    <FormItem className="flex flex-col">
+                        <FormLabel>Subtypes</FormLabel>
+                         <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="outline" className="w-full justify-start font-normal">
+                                    Select subtypes...
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent className="w-64">
+                                {musicSubtypes.map(subtype => (
+                                    <DropdownMenuCheckboxItem
+                                        key={subtype}
+                                        checked={field.value?.includes(subtype)}
+                                        onCheckedChange={(checked) => {
+                                            const currentSubtypes = field.value || [];
+                                            if (checked) {
+                                                field.onChange([...currentSubtypes, subtype]);
+                                            } else {
+                                                field.onChange(currentSubtypes.filter(s => s !== subtype));
+                                            }
+                                        }}
+                                    >
+                                        {subtype}
+                                    </DropdownMenuCheckboxItem>
+                                ))}
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                         <div className="flex flex-wrap gap-2 pt-2 min-h-6">
+                            {subtypes.map(subtype => (
+                                <Badge key={subtype} variant="secondary">
+                                    {subtype}
+                                    <button
+                                        type="button"
+                                        className="ml-2 rounded-full outline-none ring-offset-background focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                                        onClick={() => field.onChange(subtypes.filter(s => s !== subtype))}
+                                    >
+                                        <X className="h-3 w-3" />
+                                    </button>
+                                </Badge>
+                            ))}
+                        </div>
+                        <FormMessage />
                     </FormItem>
                 )}
             />

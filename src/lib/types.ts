@@ -9,6 +9,7 @@ export type Song = {
   catalogNumber: string;
   quantity: number;
   type: 'Choral' | 'Orchestral' | 'Band' | 'Solo' | 'Chamber' | 'Christmas';
+  subtypes?: string[];
   lastPerformed?: string;
   performanceHistory: { date: string; concertName: string }[];
 };

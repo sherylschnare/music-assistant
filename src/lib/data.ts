@@ -1,3 +1,4 @@
+
 import type { Song, Concert, User } from './types';
 
 export const users: User[] = [

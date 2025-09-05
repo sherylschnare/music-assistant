@@ -17,21 +17,22 @@ import { Badge } from "@/components/ui/badge"
 import type { Song } from "@/lib/types"
 
 const exportToCsv = (song: Song) => {
-  if (!song.performanceHistory) {
-    return;
+    if (!song.performanceHistory || song.performanceHistory.length === 0) {
+      return;
+    }
+    let csvContent = "data:text/csv;charset=utf-8,Concert Name,Date\n";
+    song.performanceHistory.forEach(perf => {
+      const date = new Date(perf.date).toLocaleDateString();
+      csvContent += `"${perf.concertName.replace(/"/g, '""')}","${date}"\n`;
+    });
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `${song.title.replace(/\s/g, '_')}_performance_history.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   }
-  let csvContent = "data:text/csv;charset=utf-8,Concert Name,Date\n";
-  song.performanceHistory.forEach(perf => {
-    csvContent += `${perf.concertName},${perf.date}\n`;
-  });
-  const encodedUri = encodeURI(csvContent);
-  const link = document.createElement("a");
-  link.setAttribute("href", encodedUri);
-  link.setAttribute("download", `${song.title.replace(/\s/g, '_')}_performance_history.csv`);
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-}
 
 
 export const columns: ColumnDef<Song>[] = [
@@ -117,6 +118,7 @@ export const columns: ColumnDef<Song>[] = [
       const date = row.getValue("lastPerformed")
       return date ? new Date(date as string).toLocaleDateString() : "N/A"
     },
+    sortingFn: 'datetime',
   },
   {
     id: "actions",

@@ -15,6 +15,7 @@ import {
   ChevronDown,
   Shield,
   Upload,
+  History,
 } from "lucide-react";
 
 import {
@@ -50,6 +51,7 @@ const navItems = [
   { href: "/dashboard/copyright", icon: FileText, label: "Copyright Checker" },
   { href: "/dashboard/admin", icon: Shield, label: "Admin", requiredRole: "Music Director" },
   { href: "/dashboard/import", icon: Upload, label: "Import Library", requiredRole: "Music Director" },
+  { href: "/dashboard/import-history", icon: History, label: "Import History", requiredRole: "Music Director" },
 ];
 
 function MainNav() {

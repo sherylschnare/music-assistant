@@ -2,7 +2,7 @@
 "use client"
 
 import { ColumnDef } from "@tanstack/react-table"
-import { ArrowUpDown, MoreHorizontal } from "lucide-react"
+import { ArrowUpDown, MoreHorizontal, Printer } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import {
@@ -158,6 +158,12 @@ export const columns: ColumnDef<Song>[] = [
             <DropdownMenuSeparator />
             <DropdownMenuItem asChild>
               <Link href={`/dashboard/library/${song.id}`}>View details</Link>
+            </DropdownMenuItem>
+             <DropdownMenuItem asChild>
+                <Link href={`/dashboard/reports?title=${encodeURIComponent(song.title)}`}>
+                    <Printer className="mr-2 h-4 w-4" />
+                    Print
+                </Link>
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => exportToCsv(song)} disabled={!song.performanceHistory || song.performanceHistory.length === 0}>
                 Export Performance History

@@ -29,11 +29,17 @@ import { useUser } from "@/context/user-context"
 
 import type { Song } from "@/lib/types"
 import { columns } from "./columns"
+import { useSearchParams } from "next/navigation"
 
 export function ReportClient({ data }: { data: Song[] }) {
   const { musicTypes, musicSubtypes } = useUser();
+  const searchParams = useSearchParams();
   const [sorting, setSorting] = React.useState<SortingState>([])
-  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
+  
+  const initialTitleFilter = searchParams.get('title') || '';
+  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([
+    { id: 'title', value: initialTitleFilter }
+  ])
 
   const table = useReactTable({
     data,

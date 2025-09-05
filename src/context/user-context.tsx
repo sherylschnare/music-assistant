@@ -6,6 +6,7 @@ import { collection, getDocs, doc, setDoc, onSnapshot, writeBatch, deleteDoc } f
 import { db } from '@/lib/firebase';
 import type { Song, User, Concert } from '@/lib/types';
 import { users as defaultUsers, songs as defaultSongs, concerts as defaultConcerts } from '@/lib/data';
+import { v4 as uuidv4 } from 'uuid';
 
 interface UserContextType {
   user: User;
@@ -14,6 +15,7 @@ interface UserContextType {
   setUsers: (users: User[]) => void;
   songs: Song[];
   setSongs: (songs: Song[]) => void;
+  addSongs: (songs: Song[]) => Promise<void>;
   concerts: Concert[];
   setConcerts: (concerts: Concert[]) => void;
   loading: boolean;
@@ -66,23 +68,20 @@ async function clearFirestoreData() {
   console.log("Clearing Firestore data...");
   const songsCollectionRef = collection(db, 'songs');
   const concertsCollectionRef = collection(db, 'concerts');
+  const usersCollectionRef = collection(db, 'users');
 
   const songsSnapshot = await getDocs(songsCollectionRef);
   const concertsSnapshot = await getDocs(concertsCollectionRef);
+  const usersSnapshot = await getDocs(usersCollectionRef);
 
   const batch = writeBatch(db);
 
-  songsSnapshot.forEach(doc => {
-    batch.delete(doc.ref);
-  });
-
-  concertsSnapshot.forEach(doc => {
-    batch.delete(doc.ref);
-  });
-
+  songsSnapshot.forEach(doc => batch.delete(doc.ref));
+  concertsSnapshot.forEach(doc => batch.delete(doc.ref));
+  usersSnapshot.forEach(doc => batch.delete(doc.ref));
+  
   await batch.commit();
   console.log("Firestore data cleared.");
-  // Set a flag to not run this again
   try {
     localStorage.setItem('firestore_cleared', 'true');
   } catch (e) {
@@ -100,7 +99,6 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     async function setup() {
-        // This is a one-time operation to clear the database.
         let cleared = false;
         try {
           cleared = localStorage.getItem('firestore_cleared') === 'true';
@@ -130,7 +128,6 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
             setConcertsState(concertsData);
         });
 
-        // Load logged in user from local storage
         try {
           const storedUser = localStorage.getItem('userProfile');
           if (storedUser) {
@@ -172,11 +169,9 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         const batch = writeBatch(db);
         const songsCollectionRef = collection(db, "songs");
 
-        // Clear existing songs
         const existingDocs = await getDocs(songsCollectionRef);
         existingDocs.forEach(doc => batch.delete(doc.ref));
 
-        // Add new songs
         newSongs.forEach(s => {
             const docRef = doc(db, 'songs', s.id);
             batch.set(docRef, s);
@@ -184,6 +179,19 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         await batch.commit();
     } catch (error) {
       console.error("Failed to save songs to Firestore", error);
+    }
+  };
+
+  const addSongs = async (newSongs: Song[]) => {
+    try {
+      const batch = writeBatch(db);
+      newSongs.forEach(s => {
+        const docRef = doc(db, 'songs', s.id);
+        batch.set(docRef, s);
+      });
+      await batch.commit();
+    } catch (error) {
+      console.error("Failed to add songs to Firestore", error);
     }
   };
 
@@ -203,11 +211,9 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   const updateUser = async (updatedFields: Partial<User>) => {
     const updatedUser = { ...user, ...updatedFields };
     try {
-      // Update local storage for immediate UI response of logged-in user
       localStorage.setItem('userProfile', JSON.stringify(updatedUser));
       setUserState(updatedUser);
       
-      // Update the user in Firestore
       const userRef = doc(db, 'users', updatedUser.id);
       await setDoc(userRef, updatedUser, { merge: true });
 
@@ -216,7 +222,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     }
   }
 
-  const value = { user, setUser: updateUser, users, setUsers, songs, setSongs, concerts, setConcerts, loading };
+  const value = { user, setUser: updateUser, users, setUsers, songs, setSongs, addSongs, concerts, setConcerts, loading };
 
   return (
     <UserContext.Provider value={value}>

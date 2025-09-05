@@ -100,8 +100,9 @@ body {
   #app-container > .print\:hidden {
     display: none !important;
   }
-  
-  main {
+
+  #app-container > main {
+    display: block !important;
     padding: 0;
     margin: 1rem;
   }

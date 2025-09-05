@@ -14,7 +14,7 @@ import { Loader2, Upload } from 'lucide-react';
 import { v4 as uuidv4 } from 'uuid';
 
 export default function ImportPage() {
-  const { songs, addSongs } = useUser();
+  const { songs, setSongs } = useUser();
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
@@ -42,28 +42,62 @@ export default function ImportPage() {
       skipEmptyLines: true,
       complete: async (results) => {
         try {
-          const newSongs: Song[] = results.data.map((row: any) => {
-            // Map CSV columns to Song properties
-            return {
-              id: uuidv4(),
-              title: row.Title || '',
-              composer: row.Composer || '',
-              copyright: row.Copyright || '',
-              type: row.Type || 'Uncategorized',
-              lyricist: row.Lyricist || '',
-              arranger: row.Arranger || '',
-              publisher: row.Publisher || '',
-              catalogNumber: row.CatalogNumber || '',
-              quantity: parseInt(row.Quantity, 10) || 0,
-              performanceHistory: [],
-            };
-          }).filter(song => song.title); // Filter out rows without a title
+          const songsMap = new Map<string, Song>();
+          songs.forEach(s => songsMap.set(s.id, JSON.parse(JSON.stringify(s))));
 
-          await addSongs(newSongs);
+          let newCount = 0;
+          let updatedCount = 0;
+
+          results.data.forEach((row: any) => {
+            if (!row.Title) return;
+
+            const existingSong = [...songsMap.values()].find(s => s.title.toLowerCase() === row.Title.toLowerCase());
+
+            const subtypes = row.Subtypes ? row.Subtypes.split(',').map((s: string) => s.trim()) : [];
+
+            if (existingSong) {
+              // Update existing song
+              const updatedSong = { ...existingSong };
+              if (row.Composer) updatedSong.composer = row.Composer;
+              if (row.Copyright) updatedSong.copyright = row.Copyright;
+              if (row.Type) updatedSong.type = row.Type;
+              if (row.Lyricist) updatedSong.lyricist = row.Lyricist;
+              if (row.Arranger) updatedSong.arranger = row.Arranger;
+              if (row.Publisher) updatedSong.publisher = row.Publisher;
+              if (row.CatalogNumber) updatedSong.catalogNumber = row.CatalogNumber;
+              if (row.Quantity) updatedSong.quantity = parseInt(row.Quantity, 10) || existingSong.quantity;
+              
+              const combinedSubtypes = new Set([...(existingSong.subtypes || []), ...subtypes]);
+              updatedSong.subtypes = Array.from(combinedSubtypes);
+
+              songsMap.set(existingSong.id, updatedSong);
+              updatedCount++;
+            } else {
+              // Create new song
+              const newSong: Song = {
+                id: uuidv4(),
+                title: row.Title,
+                composer: row.Composer || '',
+                copyright: row.Copyright || '',
+                type: row.Type || 'Uncategorized',
+                lyricist: row.Lyricist || '',
+                arranger: row.Arranger || '',
+                publisher: row.Publisher || '',
+                catalogNumber: row.CatalogNumber || '',
+                quantity: parseInt(row.Quantity, 10) || 0,
+                subtypes: subtypes,
+                performanceHistory: [],
+              };
+              songsMap.set(newSong.id, newSong);
+              newCount++;
+            }
+          });
+
+          await setSongs(Array.from(songsMap.values()));
 
           toast({
             title: "Import successful",
-            description: `${newSongs.length} songs have been added to your library.`,
+            description: `${newCount} new songs added and ${updatedCount} songs updated in your library.`,
           });
         } catch (error) {
           console.error("Error importing songs:", error);
@@ -93,13 +127,13 @@ export default function ImportPage() {
     <div>
       <PageHeader
         title="Import Music Library"
-        description="Upload a CSV file to add multiple songs to your library at once."
+        description="Upload a CSV file to add or update songs in your library."
       />
       <Card>
         <CardHeader>
           <CardTitle>Upload CSV File</CardTitle>
           <CardDescription>
-            The CSV file should have columns for at least 'Title', 'Composer', and 'Copyright'. Other supported columns: Type, Lyricist, Arranger, Publisher, CatalogNumber, Quantity.
+            The CSV file should have a 'Title' column. It will update existing songs or create new ones. Supported columns: Composer, Copyright, Type, Lyricist, Arranger, Publisher, CatalogNumber, Quantity, Subtypes (comma-separated).
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">

@@ -220,7 +220,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         const batch = writeBatch(db);
         newSongs.forEach(s => {
             const docRef = doc(db, 'songs', s.id);
-            batch.set(docRef, s);
+            batch.set(docRef, s, { merge: true });
         });
         await batch.commit();
     } catch (error) {

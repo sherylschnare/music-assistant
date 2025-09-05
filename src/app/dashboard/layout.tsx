@@ -17,6 +17,7 @@ import {
   Upload,
   History,
   Tag,
+  BookCopy,
 } from "lucide-react";
 
 import {
@@ -49,6 +50,7 @@ const navItems = [
   { href: "/dashboard", icon: Home, label: "Home" },
   { href: "/dashboard/library", icon: Library, label: "Music Library" },
   { href: "/dashboard/concerts", icon: Music, label: "Concerts" },
+  { href: "/dashboard/reports", icon: BookCopy, label: "Reports" },
   { href: "/dashboard/copyright", icon: FileText, label: "Copyright Checker" },
   { href: "/dashboard/admin", icon: Shield, label: "Admin", requiredRole: "Music Director" },
   { href: "/dashboard/admin/taxonomy", icon: Tag, label: "Taxonomy", requiredRole: "Music Director" },
@@ -152,9 +154,9 @@ export default function DashboardLayout({
   return (
     <UserProvider>
       <SidebarProvider>
-        <div className="flex min-h-screen">
+        <div className="flex min-h-screen" id="app-container">
           <Sidebar
-            className="border-r bg-sidebar text-sidebar-foreground"
+            className="border-r bg-sidebar text-sidebar-foreground print:hidden"
             collapsible="icon"
           >
             <SidebarHeader className="p-4">

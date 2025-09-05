@@ -86,3 +86,21 @@ body {
     @apply bg-background text-foreground;
   }
 }
+
+@media print {
+  body {
+    background: white;
+    color: black;
+  }
+  #app-container {
+    display: block;
+    padding: 0;
+  }
+  main {
+    padding: 0;
+    margin: 1rem;
+  }
+  .report-content {
+    visibility: visible;
+  }
+}

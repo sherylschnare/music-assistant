@@ -4,57 +4,65 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Helper function to check if a user is authenticated
-    function isAuthenticated() {
+    // Helper functions
+    function isSignedIn() {
       return request.auth != null;
     }
-
-    // Helper function to get the requesting user's data
-    function getRequestingUserData() {
-      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    
+    function isOwner(userId) {
+        return request.auth.uid == userId;
     }
 
-    // Helper function to check for specific roles
+    function getRole() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role;
+    }
+
     function isMusicDirector() {
-      return isAuthenticated() && getRequestingUserData().role == 'Music Director';
+      return isSignedIn() && getRole() == 'Music Director';
     }
 
     function isLibrarian() {
-        return isAuthenticated() && getRequestingUserData().role == 'Librarian';
+      return isSignedIn() && getRole() == 'Librarian';
     }
 
-    // Users Collection Rules
+    // Users collection
     match /users/{userId} {
-      // Any authenticated user can read user profiles
-      allow read: if isAuthenticated();
-      // Only the user themselves or a Music Director can update a profile
-      allow update: if isAuthenticated() && (request.auth.uid == userId || isMusicDirector());
-       // Only a Music Director can create or delete users
+      // Allow anyone to see the list of users for the login page
+      allow list: if true;
+      // Allow any signed-in user to view any profile
+      allow get: if isSignedIn();
+      // A user can update their own document. Music Directors can update any.
+      allow update: if isSignedIn() && (isOwner(userId) || isMusicDirector());
+      // Only Music Directors can create or delete users
       allow create, delete: if isMusicDirector();
     }
 
-    // Songs Collection Rules
+    // Songs collection
     match /songs/{songId} {
-        // Any authenticated user can read songs
-        allow read: if isAuthenticated();
-        // Only Music Directors or Librarians can write/update/delete songs
-        allow write, update, delete: if isMusicDirector() || isLibrarian();
+      // Any authenticated user can read songs
+      allow read: if isSignedIn();
+      // Only Music Directors or Librarians can write to songs
+      allow write: if isMusicDirector() || isLibrarian();
     }
 
-    // Concerts Collection Rules
+    // Concerts collection
     match /concerts/{concertId} {
-        // Any authenticated user can read concerts
-        allow read: if isAuthenticated();
-        // Only Music Directors or Librarians can write/update/delete concerts
-        allow write, update, delete: if isMusicDirector() || isLibrarian();
+       // Any authenticated user can read concerts
+      allow read: if isSignedIn();
+       // Only Music Directors or Librarians can write to concerts
+      allow write: if isMusicDirector() || isLibrarian();
+    }
+    
+    // App Data collection (for taxonomy)
+    match /app-data/{docId} {
+        // Any authenticated user can read taxonomy
+        allow read: if isSignedIn();
+        // Only Music Directors can write to taxonomy
+        allow write: if isMusicDirector();
     }
 
-    // Taxonomy (app-data) Rules
-    match /app-data/{docId} {
-        // Any authenticated user can read taxonomy data
-        allow read: if isAuthenticated();
-        // Only Music Directors can write/update/delete taxonomy
-        allow write, update, delete: if isMusicDirector();
+    match /{document=**} {
+      allow read, write: if false;
     }
   }
 }

@@ -78,4 +78,23 @@ export const columns: ColumnDef<Song>[] = [
         return subtypes.includes(value);
     }
   },
+  {
+    accessorKey: "lastPerformed",
+    header: ({ column }) => {
+        return (
+          <Button
+            variant="ghost"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+          >
+            Last Performed
+            <ArrowUpDown className="ml-2 h-4 w-4" />
+          </Button>
+        )
+      },
+    cell: ({ row }) => {
+      const date = row.getValue("lastPerformed")
+      return date ? new Date(date as string).toLocaleDateString() : "N/A"
+    },
+    sortingFn: 'datetime',
+  },
 ]

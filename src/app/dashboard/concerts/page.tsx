@@ -2,7 +2,7 @@
 'use client'
 
 import * as React from "react"
-import { Plus, Calendar as CalendarIcon, ListMusic, ArrowUp, ArrowDown, X, Search } from "lucide-react"
+import { Plus, Calendar as CalendarIcon, ListMusic, ArrowUp, ArrowDown, X, Search, Lock } from "lucide-react"
 import {
   Card,
   CardContent,
@@ -34,6 +34,7 @@ import { cn } from "@/lib/utils"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import Link from "next/link"
 
 
 function CreateConcertDialog() {
@@ -92,6 +93,7 @@ function CreateConcertDialog() {
       name: concertName,
       date: date.toISOString(),
       pieces: program,
+      isLocked: false,
     };
     setConcerts([...concerts, newConcert]);
     // Reset form
@@ -262,28 +264,36 @@ export default function ConcertsPage() {
       </PageHeader>
       
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {sortedConcerts.map(concert => (
-          <Card key={concert.id} className="flex flex-col">
-            <CardHeader>
-              <CardTitle className="font-headline">{concert.name}</CardTitle>
-              <CardDescription>{new Date(concert.date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</CardDescription>
-            </CardHeader>
-            <CardContent className="flex-grow">
-              <div className="flex items-center text-sm text-muted-foreground mb-4">
-                <ListMusic className="w-4 h-4 mr-2" /> {concert.pieces.length} pieces
-              </div>
-              <ul className="space-y-1 text-sm list-disc pl-5">
-                {concert.pieces.slice(0, 4).map(piece => (
-                  <li key={piece.id}>{piece.title}</li>
-                ))}
-                {concert.pieces.length > 4 && <li>...and {concert.pieces.length - 4} more.</li>}
-              </ul>
-            </CardContent>
-            <CardFooter>
-                <Button variant="outline" className="w-full">View Program</Button>
-            </CardFooter>
-          </Card>
-        ))}
+        {sortedConcerts.map(concert => {
+          const isPast = new Date(concert.date) < new Date();
+          return (
+            <Card key={concert.id} className="flex flex-col">
+              <CardHeader>
+                <CardTitle className="font-headline flex items-center justify-between">
+                  {concert.name}
+                  {(concert.isLocked || isPast) && <Lock className="w-4 h-4 text-muted-foreground" />}
+                </CardTitle>
+                <CardDescription>{new Date(concert.date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</CardDescription>
+              </CardHeader>
+              <CardContent className="flex-grow">
+                <div className="flex items-center text-sm text-muted-foreground mb-4">
+                  <ListMusic className="w-4 h-4 mr-2" /> {concert.pieces.length} pieces
+                </div>
+                <ul className="space-y-1 text-sm list-disc pl-5">
+                  {concert.pieces.slice(0, 4).map(piece => (
+                    <li key={piece.id}>{piece.title}</li>
+                  ))}
+                  {concert.pieces.length > 4 && <li>...and {concert.pieces.length - 4} more.</li>}
+                </ul>
+              </CardContent>
+              <CardFooter>
+                  <Button variant="outline" className="w-full" asChild>
+                    <Link href={`/dashboard/concerts/${concert.id}`}>View Program</Link>
+                  </Button>
+              </CardFooter>
+            </Card>
+          )
+        })}
       </div>
     </div>
   )

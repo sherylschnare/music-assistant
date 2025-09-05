@@ -18,6 +18,7 @@ export type Concert = {
   name: string;
   date: string;
   pieces: Song[];
+  isLocked?: boolean;
 };
 
 export type User = {

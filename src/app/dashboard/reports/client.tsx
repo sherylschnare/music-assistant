@@ -25,11 +25,13 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { useUser } from "@/context/user-context"
 
 import type { Song } from "@/lib/types"
 import { columns } from "./columns"
 import { useSearchParams } from "next/navigation"
+import { ChevronDown } from "lucide-react"
 
 export function ReportClient({ data }: { data: Song[] }) {
   const { musicTypes, musicSubtypes } = useUser();
@@ -62,6 +64,19 @@ export function ReportClient({ data }: { data: Song[] }) {
     }
   })
 
+  const selectedSubtypes = (table.getColumn("subtypes")?.getFilterValue() as string[]) || [];
+
+  const handleSubtypeFilterChange = (subtype: string) => {
+    const currentSubtypes = [...selectedSubtypes];
+    const index = currentSubtypes.indexOf(subtype);
+    if (index > -1) {
+      currentSubtypes.splice(index, 1);
+    } else {
+      currentSubtypes.push(subtype);
+    }
+    table.getColumn("subtypes")?.setFilterValue(currentSubtypes.length > 0 ? currentSubtypes : undefined);
+  };
+
   return (
     <div className="w-full">
       <div className="flex items-center py-4 gap-2 print:hidden">
@@ -91,24 +106,25 @@ export function ReportClient({ data }: { data: Song[] }) {
             ))}
           </SelectContent>
         </Select>
-        <Select
-          value={(table.getColumn("subtypes")?.getFilterValue() as string) ?? "All"}
-          onValueChange={(value) =>
-            table.getColumn("subtypes")?.setFilterValue(value === "All" ? "" : value)
-          }
-        >
-          <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Filter by subtype" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="All">All Subtypes</SelectItem>
-            {musicSubtypes.map((subtype) => (
-              <SelectItem key={subtype} value={subtype}>
-                {subtype}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+                <Button variant="outline" className="w-[180px] justify-between">
+                    <span>Subtypes {selectedSubtypes.length > 0 && `(${selectedSubtypes.length})`}</span>
+                    <ChevronDown className="h-4 w-4" />
+                </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="w-[180px]">
+                {musicSubtypes.map((subtype) => (
+                    <DropdownMenuCheckboxItem
+                        key={subtype}
+                        checked={selectedSubtypes.includes(subtype)}
+                        onCheckedChange={() => handleSubtypeFilterChange(subtype)}
+                    >
+                        {subtype}
+                    </DropdownMenuCheckboxItem>
+                ))}
+            </DropdownMenuContent>
+        </DropdownMenu>
       </div>
       <div className="rounded-md border">
         <Table>

@@ -74,8 +74,10 @@ export const columns: ColumnDef<Song>[] = [
       )
     },
     filterFn: (row, id, value) => {
-        const subtypes = row.getValue(id) as string[] || [];
-        return subtypes.includes(value);
+        const rowSubtypes = row.getValue(id) as string[] || [];
+        const filterValues = value as string[];
+        if (filterValues.length === 0) return true;
+        return filterValues.some(v => rowSubtypes.includes(v));
     }
   },
   {

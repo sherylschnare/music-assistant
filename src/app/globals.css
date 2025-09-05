@@ -88,17 +88,7 @@ body {
 }
 
 @media print {
-  body {
-    background: white !important;
-    color: black !important;
-  }
-
   .print\:hidden {
-    display: none !important;
-  }
-
-  main {
-    padding: 0;
-    margin: 1rem;
+    display: none;
   }
 }

@@ -49,7 +49,7 @@ export default function ImportPage() {
           let updatedCount = 0;
 
           results.data.forEach((row: any) => {
-            const rowTitle = row.Selection?.trim(); // Use 'Selection' column
+            const rowTitle = (row.Selection || row.Title)?.trim(); 
             if (!rowTitle) return;
 
             const existingSong = [...songsMap.values()].find(s => s.title.trim().toLowerCase() === rowTitle.toLowerCase());

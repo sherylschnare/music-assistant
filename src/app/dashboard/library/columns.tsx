@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Badge } from "@/components/ui/badge"
 import type { Song } from "@/lib/types"
+import Link from "next/link"
 
 const exportToCsv = (song: Song) => {
     if (!song.performanceHistory || song.performanceHistory.length === 0) {
@@ -142,7 +143,9 @@ export const columns: ColumnDef<Song>[] = [
               Copy Song ID
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>View details</DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link href={`/dashboard/library/${song.id}`}>View details</Link>
+            </DropdownMenuItem>
             <DropdownMenuItem onClick={() => exportToCsv(song)} disabled={!song.performanceHistory || song.performanceHistory.length === 0}>
                 Export Performance History
             </DropdownMenuItem>

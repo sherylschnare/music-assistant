@@ -2,7 +2,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { collection, getDocs, doc, setDoc, onSnapshot, writeBatch } from 'firebase/firestore';
+import { collection, getDocs, doc, setDoc, onSnapshot, writeBatch, deleteDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import type { Song, User, Concert } from '@/lib/types';
 import { users as defaultUsers, songs as defaultSongs, concerts as defaultConcerts } from '@/lib/data';
@@ -62,6 +62,34 @@ async function seedInitialData() {
     console.log("Initial data seeding complete.");
 }
 
+async function clearFirestoreData() {
+  console.log("Clearing Firestore data...");
+  const songsCollectionRef = collection(db, 'songs');
+  const concertsCollectionRef = collection(db, 'concerts');
+
+  const songsSnapshot = await getDocs(songsCollectionRef);
+  const concertsSnapshot = await getDocs(concertsCollectionRef);
+
+  const batch = writeBatch(db);
+
+  songsSnapshot.forEach(doc => {
+    batch.delete(doc.ref);
+  });
+
+  concertsSnapshot.forEach(doc => {
+    batch.delete(doc.ref);
+  });
+
+  await batch.commit();
+  console.log("Firestore data cleared.");
+  // Set a flag to not run this again
+  try {
+    localStorage.setItem('firestore_cleared', 'true');
+  } catch (e) {
+    console.error('Could not set firestore_cleared flag in local storage.', e)
+  }
+}
+
 
 export const UserProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUserState] = useState<User>(defaultUser);
@@ -72,6 +100,18 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     async function setup() {
+        // This is a one-time operation to clear the database.
+        let cleared = false;
+        try {
+          cleared = localStorage.getItem('firestore_cleared') === 'true';
+        } catch(e) {
+          console.error("Could not read firestore_cleared flag from local storage.", e);
+        }
+
+        if (!cleared) {
+          await clearFirestoreData();
+        }
+
         await seedInitialData();
 
         const usersUnsubscribe = onSnapshot(collection(db, "users"), (snapshot) => {

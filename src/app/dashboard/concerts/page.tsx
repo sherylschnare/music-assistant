@@ -1,7 +1,8 @@
+
 'use client'
 
 import * as React from "react"
-import { Plus, Calendar as CalendarIcon, ListMusic } from "lucide-react"
+import { Plus, Calendar as CalendarIcon, ListMusic, ArrowUp, ArrowDown, X } from "lucide-react"
 import {
   Card,
   CardContent,
@@ -12,7 +13,7 @@ import {
 } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { PageHeader } from "@/components/page-header"
-import { concerts, songs } from "@/lib/data"
+import { useUser } from "@/context/user-context"
 import type { Concert, Song } from "@/lib/types"
 import { Badge } from "@/components/ui/badge"
 import {
@@ -34,21 +35,57 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import { Checkbox } from "@/components/ui/checkbox"
 
 function CreateConcertDialog() {
+  const { songs, concerts, setConcerts } = useUser();
   const [open, setOpen] = React.useState(false)
   const [date, setDate] = React.useState<Date>()
-  const [selectedSongs, setSelectedSongs] = React.useState<Set<string>>(new Set())
+  const [concertName, setConcertName] = React.useState("")
+  const [program, setProgram] = React.useState<Song[]>([])
 
-  const handleSelectSong = (songId: string) => {
-    setSelectedSongs(prev => {
-      const newSet = new Set(prev)
-      if (newSet.has(songId)) {
-        newSet.delete(songId)
+  const librarySongs = songs;
+
+  const handleToggleSongInLibrary = (song: Song) => {
+    setProgram(prevProgram => {
+      const isInProgram = prevProgram.some(p => p.id === song.id);
+      if (isInProgram) {
+        return prevProgram.filter(p => p.id !== song.id);
       } else {
-        newSet.add(songId)
+        return [...prevProgram, song];
       }
-      return newSet
-    })
+    });
+  };
+
+  const handleRemoveFromProgram = (songId: string) => {
+    setProgram(prev => prev.filter(s => s.id !== songId));
+  };
+  
+  const moveSong = (index: number, direction: 'up' | 'down') => {
+    const newProgram = [...program];
+    const newIndex = direction === 'up' ? index - 1 : index + 1;
+    if (newIndex < 0 || newIndex >= newProgram.length) return;
+    const [movedSong] = newProgram.splice(index, 1);
+    newProgram.splice(newIndex, 0, movedSong);
+    setProgram(newProgram);
+  };
+
+  const handleSave = () => {
+    if (!concertName || !date || program.length === 0) {
+      // Basic validation, you could add toasts here
+      return;
+    }
+    const newConcert: Concert = {
+      id: `concert-${Date.now()}`,
+      name: concertName,
+      date: date.toISOString(),
+      pieces: program,
+    };
+    setConcerts([...concerts, newConcert]);
+    // Reset form
+    setConcertName("");
+    setDate(undefined);
+    setProgram([]);
+    setOpen(false);
   }
+
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -57,74 +94,115 @@ function CreateConcertDialog() {
           <Plus className="mr-2 h-4 w-4" /> Create Program
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-2xl">
+      <DialogContent className="sm:max-w-4xl">
         <DialogHeader>
           <DialogTitle className="font-headline">Create New Concert Program</DialogTitle>
           <DialogDescription>
             Name your concert, set a date, and select pieces from your library.
           </DialogDescription>
         </DialogHeader>
-        <div className="grid gap-4 py-4">
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="name" className="text-right">
-              Concert Name
-            </Label>
-            <Input id="name" placeholder="e.g., Winter Gala 2024" className="col-span-3" />
-          </div>
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="date" className="text-right">
-              Date
-            </Label>
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  variant={"outline"}
-                  className={cn(
-                    "w-[280px] justify-start text-left font-normal",
-                    !date && "text-muted-foreground"
-                  )}
-                >
-                  <CalendarIcon className="mr-2 h-4 w-4" />
-                  {date ? format(date, "PPP") : <span>Pick a date</span>}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0">
-                <Calendar
-                  mode="single"
-                  selected={date}
-                  onSelect={setDate}
-                  initialFocus
-                />
-              </PopoverContent>
-            </Popover>
-          </div>
-          <div className="grid grid-cols-4 items-start gap-4">
-            <Label className="text-right pt-2">
-              Select Pieces
-            </Label>
-            <div className="col-span-3">
-              <ScrollArea className="h-72 w-full rounded-md border">
-                <div className="p-4 space-y-2">
-                  {songs.map(song => (
-                    <div key={song.id} className="flex items-center space-x-2 p-2 rounded-md hover:bg-muted">
-                       <Checkbox
-                        id={`song-${song.id}`}
-                        checked={selectedSongs.has(song.id)}
-                        onCheckedChange={() => handleSelectSong(song.id)}
-                      />
-                      <label htmlFor={`song-${song.id}`} className="flex-1 cursor-pointer">
-                        <p className="text-sm font-medium">{song.title}</p>
-                        <p className="text-xs text-muted-foreground">{song.composer}</p>
-                      </label>
-                    </div>
-                  ))}
+        <div className="grid gap-8 py-4 md:grid-cols-2">
+            <div>
+              <h3 className="text-lg font-semibold mb-4">Program Details</h3>
+              <div className="grid gap-4">
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="name" className="text-right">
+                    Concert Name
+                  </Label>
+                  <Input 
+                    id="name" 
+                    placeholder="e.g., Winter Gala 2024" 
+                    className="col-span-3"
+                    value={concertName}
+                    onChange={(e) => setConcertName(e.target.value)}
+                  />
                 </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="date" className="text-right">
+                    Date
+                  </Label>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant={"outline"}
+                        className={cn(
+                          "w-[280px] justify-start text-left font-normal",
+                          !date && "text-muted-foreground"
+                        )}
+                      >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {date ? format(date, "PPP") : <span>Pick a date</span>}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0">
+                      <Calendar
+                        mode="single"
+                        selected={date}
+                        onSelect={setDate}
+                        initialFocus
+                      />
+                    </PopoverContent>
+                  </Popover>
+                </div>
+              </div>
+              <h3 className="text-lg font-semibold mt-8 mb-4">Program Order</h3>
+              <ScrollArea className="h-72 w-full rounded-md border">
+                {program.length > 0 ? (
+                    <div className="p-2 space-y-2">
+                        {program.map((song, index) => (
+                        <div key={song.id} className="flex items-center justify-between p-2 rounded-md bg-muted/50">
+                            <div>
+                                <p className="text-sm font-medium">{song.title}</p>
+                                <p className="text-xs text-muted-foreground">{song.composer}</p>
+                            </div>
+                            <div className="flex items-center gap-1">
+                                <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => moveSong(index, 'up')} disabled={index === 0}>
+                                    <ArrowUp className="h-4 w-4"/>
+                                </Button>
+                                <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => moveSong(index, 'down')} disabled={index === program.length - 1}>
+                                    <ArrowDown className="h-4 w-4"/>
+                                </Button>
+                                <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive" onClick={() => handleRemoveFromProgram(song.id)}>
+                                    <X className="h-4 w-4"/>
+                                </Button>
+                            </div>
+                        </div>
+                        ))}
+                    </div>
+                ) : (
+                    <div className="p-4 text-center text-sm text-muted-foreground">
+                        Select songs from the library to add them to the program.
+                    </div>
+                )}
               </ScrollArea>
             </div>
-          </div>
+            <div>
+                 <h3 className="text-lg font-semibold mb-4">Music Library</h3>
+                 <ScrollArea className="h-[500px] w-full rounded-md border">
+                    <div className="p-4 space-y-2">
+                    {librarySongs.map(song => {
+                        const isSelected = program.some(p => p.id === song.id);
+                        return (
+                            <div key={song.id} className="flex items-center space-x-2 p-2 rounded-md hover:bg-muted">
+                            <Checkbox
+                                id={`song-${song.id}`}
+                                checked={isSelected}
+                                onCheckedChange={() => handleToggleSongInLibrary(song)}
+                            />
+                            <label htmlFor={`song-${song.id}`} className="flex-1 cursor-pointer">
+                                <p className="text-sm font-medium">{song.title}</p>
+                                <p className="text-xs text-muted-foreground">{song.composer}</p>
+                            </label>
+                            </div>
+                        )
+                    })}
+                    </div>
+                </ScrollArea>
+            </div>
         </div>
         <DialogFooter>
-          <Button type="submit">Save Program</Button>
+          <Button type="button" variant="ghost" onClick={() => setOpen(false)}>Cancel</Button>
+          <Button onClick={handleSave}>Save Program</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -133,7 +211,8 @@ function CreateConcertDialog() {
 
 
 export default function ConcertsPage() {
-  const sortedConcerts = [...concerts].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+  const { concerts } = useUser();
+  const sortedConcerts = concerts ? [...concerts].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()) : [];
 
   return (
     <div>
@@ -168,3 +247,5 @@ export default function ConcertsPage() {
     </div>
   )
 }
+
+    

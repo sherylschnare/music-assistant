@@ -23,7 +23,7 @@ function ReportsPageContent() {
           Print Report
         </Button>
       </PageHeader>
-      <div className="report-content">
+      <div>
         <ReportClient data={songs} />
       </div>
     </div>

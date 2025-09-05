@@ -89,18 +89,20 @@ body {
 
 @media print {
   body {
-    background: white;
-    color: black;
+    background: white !important;
+    color: black !important;
   }
-  #app-container {
-    display: block;
-    padding: 0;
+
+  .print\:hidden {
+    display: none !important;
   }
+
+  #app-container > .print\:hidden {
+    display: none !important;
+  }
+  
   main {
     padding: 0;
     margin: 1rem;
-  }
-  .report-content {
-    visibility: visible;
   }
 }

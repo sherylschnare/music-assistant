@@ -1,68 +1,40 @@
-
 rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-
-    // Helper functions
-    function isSignedIn() {
-      return request.auth != null;
-    }
     
-    function isOwner(userId) {
-        return request.auth.uid == userId;
-    }
-
-    function getRole() {
-      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role;
-    }
-
-    function isMusicDirector() {
-      return isSignedIn() && getRole() == 'Music Director';
-    }
-
-    function isLibrarian() {
-      return isSignedIn() && getRole() == 'Librarian';
-    }
-
-    // Users collection
-    match /users/{userId} {
-      // Allow anyone to see the list of users for the login page
-      allow list: if true;
-      // Allow any signed-in user to view any profile
-      allow get: if isSignedIn();
-      // A user can update their own document. Music Directors can update any.
-      allow update: if isSignedIn() && (isOwner(userId) || isMusicDirector());
-      // Only Music Directors can create or delete users
-      allow create, delete: if isMusicDirector();
-    }
-
-    // Songs collection
-    match /songs/{songId} {
-      // Any authenticated user can read songs
-      allow read: if isSignedIn();
-      // Only Music Directors or Librarians can write to songs
-      allow write: if isMusicDirector() || isLibrarian();
-    }
-
-    // Concerts collection
-    match /concerts/{concertId} {
-       // Any authenticated user can read concerts
-      allow read: if isSignedIn();
-       // Only Music Directors or Librarians can write to concerts
-      allow write: if isMusicDirector() || isLibrarian();
-    }
-    
-    // App Data collection (for taxonomy)
-    match /app-data/{docId} {
-        // Any authenticated user can read taxonomy
-        allow read: if isSignedIn();
-        // Only Music Directors can write to taxonomy
-        allow write: if isMusicDirector();
-    }
-
+    // Default deny all
     match /{document=**} {
       allow read, write: if false;
+    }
+
+    // Allow reading user documents for login, but restrict writes.
+    match /users/{userId} {
+      allow list, get: if true;
+      allow create: if request.auth.token.role == 'Music Director';
+      allow update: if request.auth.uid == userId || request.auth.token.role == 'Music Director';
+      allow delete: if request.auth.token.role == 'Music Director';
+    }
+
+    // Allow authenticated users to read music data.
+    // Only Music Directors and Librarians can write.
+    match /songs/{songId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && (request.auth.token.role == 'Music Director' || request.auth.token.role == 'Librarian');
+    }
+
+    // Allow authenticated users to read concert data.
+    // Only Music Directors and Librarians can write.
+    match /concerts/{concertId} {
+        allow read: if request.auth != null;
+        allow write: if request.auth != null && (request.auth.token.role == 'Music Director' || request.auth.token.role == 'Librarian');
+    }
+
+    // Allow authenticated users to read taxonomy.
+    // Only Music Directors can write.
+    match /app-data/taxonomy {
+       allow read: if request.auth != null;
+       allow write: if request.auth != null && request.auth.token.role == 'Music Director';
     }
   }
 }

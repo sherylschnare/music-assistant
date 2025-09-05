@@ -17,6 +17,9 @@ import { Badge } from "@/components/ui/badge"
 import type { Song } from "@/lib/types"
 
 const exportToCsv = (song: Song) => {
+  if (!song.performanceHistory) {
+    return;
+  }
   let csvContent = "data:text/csv;charset=utf-8,Concert Name,Date\n";
   song.performanceHistory.forEach(perf => {
     csvContent += `${perf.concertName},${perf.date}\n`;
@@ -138,7 +141,7 @@ export const columns: ColumnDef<Song>[] = [
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem>View details</DropdownMenuItem>
-            <DropdownMenuItem onClick={() => exportToCsv(song)} disabled={song.performanceHistory.length === 0}>
+            <DropdownMenuItem onClick={() => exportToCsv(song)} disabled={!song.performanceHistory || song.performanceHistory.length === 0}>
                 Export Performance History
             </DropdownMenuItem>
           </DropdownMenuContent>

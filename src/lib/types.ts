@@ -8,7 +8,7 @@ export type Song = {
   publisher: string;
   catalogNumber: string;
   quantity: number;
-  type: 'Choral' | 'Orchestral' | 'Band' | 'Solo' | 'Chamber';
+  type: 'Choral' | 'Orchestral' | 'Band' | 'Solo' | 'Chamber' | 'Christmas';
   lastPerformed?: string;
   performanceHistory: { date: string; concertName: string }[];
 };

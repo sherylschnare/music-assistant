@@ -5,7 +5,7 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 import { collection, getDocs, doc, setDoc, onSnapshot, writeBatch, getDoc, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import type { Song, User, Concert } from '@/lib/types';
-import { users as defaultUsers } from '@/lib/data';
+import { users as defaultUsers, songs as defaultSongs, concerts as defaultConcerts } from '@/lib/data';
 
 interface UserContextType {
   user: User;
@@ -32,17 +32,55 @@ const baseTypes = ["Choral", "Orchestral", "Band", "Solo", "Chamber", "Holiday"]
 
 async function seedInitialData() {
     console.log("Seeding initial data if necessary...");
+    const batch = writeBatch(db);
+
+    // Seed Taxonomy
     const taxonomyDocRef = doc(db, 'app-data', 'taxonomy');
     const taxonomySnap = await getDoc(taxonomyDocRef);
-
     if (!taxonomySnap.exists()) {
         try {
-            await setDoc(taxonomyDocRef, { types: baseTypes, subtypes: baseSubtypes });
+            batch.set(taxonomyDocRef, { types: baseTypes, subtypes: baseSubtypes });
             console.log("Seeding taxonomy...");
         } catch (error) {
             console.error("Failed to seed taxonomy data", error);
         }
     }
+
+    // Seed Users
+    const usersCollectionRef = collection(db, 'users');
+    const usersSnapshot = await getDocs(usersCollectionRef);
+    if (usersSnapshot.empty) {
+        defaultUsers.forEach(user => {
+            const docRef = doc(db, 'users', user.id);
+            batch.set(docRef, user);
+        });
+        console.log("Seeding users...");
+    }
+
+    // Seed Songs
+    const songsCollectionRef = collection(db, 'songs');
+    const songsSnapshot = await getDocs(songsCollectionRef);
+    if (songsSnapshot.empty) {
+        defaultSongs.forEach(song => {
+            const docRef = doc(db, 'songs', song.id);
+            batch.set(docRef, song);
+        });
+        console.log("Seeding songs...");
+    }
+    
+    // Seed Concerts
+    const concertsCollectionRef = collection(db, 'concerts');
+    const concertsSnapshot = await getDocs(concertsCollectionRef);
+    if (concertsSnapshot.empty) {
+        defaultConcerts.forEach(concert => {
+            const docRef = doc(db, 'concerts', concert.id);
+            batch.set(docRef, concert);
+        });
+        console.log("Seeding concerts...");
+    }
+
+    await batch.commit();
+    console.log("Initial data seeding complete.");
 }
 
 

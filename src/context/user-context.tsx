@@ -123,9 +123,48 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
             setSongsState(songsData);
         });
 
-        const concertsUnsubscribe = onSnapshot(collection(db, "concerts"), (snapshot) => {
+        const concertsUnsubscribe = onSnapshot(collection(db, "concerts"), async (snapshot) => {
             const concertsData = snapshot.docs.map(doc => doc.data() as Concert);
-            setConcertsState(concertsData);
+            
+            // Reconstruct concerts from performance history
+            const songsSnapshot = await getDocs(collection(db, "songs"));
+            const allSongs = songsSnapshot.docs.map(doc => doc.data() as Song);
+
+            const historicalConcerts: { [key: string]: { date: string, pieces: Song[] } } = {};
+
+            allSongs.forEach(song => {
+                if (song.performanceHistory) {
+                    song.performanceHistory.forEach(perf => {
+                        if (!historicalConcerts[perf.concertName]) {
+                            historicalConcerts[perf.concertName] = {
+                                date: perf.date,
+                                pieces: [],
+                            };
+                        }
+                        // Avoid adding duplicate songs to the same concert
+                        if (!historicalConcerts[perf.concertName].pieces.some(p => p.id === song.id)) {
+                            historicalConcerts[perf.concertName].pieces.push(song);
+                        }
+                    });
+                }
+            });
+
+            const reconstructedConcerts: Concert[] = Object.entries(historicalConcerts).map(([name, data]) => ({
+                id: `hist-${name.replace(/\s+/g, '-').toLowerCase()}`,
+                name,
+                date: data.date,
+                pieces: data.pieces,
+            }));
+
+            // Combine manually created concerts with reconstructed ones
+            const combinedConcerts = [...concertsData];
+            reconstructedConcerts.forEach(histConcert => {
+                if (!combinedConcerts.some(c => c.id === histConcert.id)) {
+                    combinedConcerts.push(histConcert);
+                }
+            });
+
+            setConcertsState(combinedConcerts);
         });
 
         try {

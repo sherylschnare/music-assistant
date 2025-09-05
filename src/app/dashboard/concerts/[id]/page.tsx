@@ -6,10 +6,10 @@ import { useUser } from "@/context/user-context"
 import { useParams, useRouter } from "next/navigation"
 import { PageHeader } from "@/components/page-header"
 import { Button } from "@/components/ui/button"
-import { ArrowLeft, Plus, Calendar as CalendarIcon, ListMusic, ArrowUp, ArrowDown, X, Search, Lock } from "lucide-react"
+import { ArrowLeft, Calendar as CalendarIcon, ArrowUp, ArrowDown, X, Search } from "lucide-react"
 import Link from "next/link"
 import type { Concert, Song } from "@/lib/types"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
@@ -128,7 +128,7 @@ export default function ConcertDetailsPage() {
                 </Button>
             </PageHeader>
             <div className="grid gap-8">
-                <Card className="sm:max-w-4xl max-h-[90vh] flex flex-col">
+                <Card>
                     <CardHeader>
                         <CardTitle className="font-headline">Edit Concert Program</CardTitle>
                         <CardDescription>
@@ -230,7 +230,7 @@ export default function ConcertDetailsPage() {
                             )}
                             </ScrollArea>
                         </div>
-                        {!isLocked && (
+                        {!isLocked ? (
                             <div>
                                 <h3 className="text-lg font-semibold mb-4">Music Library</h3>
                                 <div className="flex gap-2 mb-4">
@@ -276,10 +276,17 @@ export default function ConcertDetailsPage() {
                                     </div>
                                 </ScrollArea>
                             </div>
+                        ) : (
+                            <div className="flex items-center justify-center h-full rounded-md border border-dashed">
+                                <div className="text-center text-muted-foreground">
+                                    <p>This concert is locked.</p>
+                                    <p className="text-xs">Editing is disabled for past or locked concerts.</p>
+                                </div>
+                            </div>
                         )}
                         </div>
                     </CardContent>
-                    <CardContent className="flex justify-end gap-2">
+                    <CardContent className="flex justify-end gap-2 pt-6">
                         <Button variant="ghost" onClick={() => router.push('/dashboard/concerts')}>Cancel</Button>
                         <Button onClick={handleSaveChanges} disabled={isLocked}>Save Changes</Button>
                     </CardContent>

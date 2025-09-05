@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button"
 import { ArrowLeft, Calendar as CalendarIcon, ArrowUp, ArrowDown, X, Search } from "lucide-react"
 import Link from "next/link"
 import type { Concert, Song } from "@/lib/types"
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
@@ -285,10 +285,10 @@ export default function ConcertDetailsPage() {
                         )}
                         </div>
                     </CardContent>
-                    <CardContent className="flex justify-end gap-2 pt-6">
+                    <CardFooter className="flex justify-end gap-2">
                         <Button variant="ghost" onClick={() => router.push('/dashboard/concerts')}>Cancel</Button>
                         <Button onClick={handleSaveChanges} disabled={isLocked}>Save Changes</Button>
-                    </CardContent>
+                    </CardFooter>
                 </Card>
             </div>
         </div>

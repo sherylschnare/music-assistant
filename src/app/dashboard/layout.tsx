@@ -9,7 +9,6 @@ import {
   Library,
   Music,
   FileText,
-  Upload,
   User,
   Settings,
   LogOut,
@@ -48,7 +47,6 @@ const navItems = [
   { href: "/dashboard/library", icon: Library, label: "Music Library" },
   { href: "/dashboard/concerts", icon: Music, label: "Concerts" },
   { href: "/dashboard/copyright", icon: FileText, label: "Copyright Checker" },
-  { href: "/dashboard/import", icon: Upload, label: "Import" },
   { href: "/dashboard/admin", icon: Shield, label: "Admin", requiredRole: "Music Director" },
 ];
 

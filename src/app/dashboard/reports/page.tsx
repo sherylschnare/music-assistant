@@ -1,14 +1,14 @@
 
 'use client'
 
-import React, { Suspense } from "react"
+import React from "react"
 import { useUser } from "@/context/user-context"
 import { PageHeader } from "@/components/page-header"
 import { ReportClient } from "./client"
 import { Button } from "@/components/ui/button"
 import { Printer } from "lucide-react"
 
-function ReportsPageContent() {
+export default function ReportsPage() {
   const { songs } = useUser();
 
   const handlePrint = () => {
@@ -27,14 +27,5 @@ function ReportsPageContent() {
         <ReportClient data={songs} />
       </div>
     </div>
-  )
-}
-
-
-export default function ReportsPage() {
-  return (
-    <Suspense fallback={<div>Loading...</div>}>
-      <ReportsPageContent />
-    </Suspense>
   )
 }

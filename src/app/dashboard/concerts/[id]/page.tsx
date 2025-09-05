@@ -46,7 +46,7 @@ export default function ConcertDetailsPage() {
             setProgram(foundConcert.pieces);
             setConcertName(foundConcert.name);
             setDate(new Date(foundConcert.date));
-            setIsLocked(foundConcert.isLocked || new Date(foundConcert.date) < new Date());
+            setIsLocked(foundConcert.isLocked || false);
         }
     }, [id, concerts]);
 
@@ -189,10 +189,9 @@ export default function ConcertDetailsPage() {
                                         id="lock-concert"
                                         checked={isLocked}
                                         onCheckedChange={setIsLocked}
-                                        disabled={isPast}
                                     />
                                     <Label htmlFor="lock-concert" className="text-sm text-muted-foreground">
-                                        {isPast ? "Concert date has passed" : "Prevent further edits"}
+                                        Prevent further edits
                                     </Label>
                                 </div>
                             </div>

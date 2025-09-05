@@ -165,35 +165,57 @@ function CreateConcertDialog() {
                   </div>
                 </div>
                 <h3 className="text-lg font-semibold mt-8 mb-4">Program Order</h3>
-                <ScrollArea className="h-72 w-full rounded-md border">
-                  {program.length > 0 ? (
-                      <div className="p-2 space-y-2">
-                          {program.map((song, index) => (
-                          <div key={song.id} className="flex items-center justify-between p-2 rounded-md bg-muted/50">
-                              <div>
-                                  <p className="text-sm font-medium">{song.title}</p>
-                                  <p className="text-xs text-muted-foreground">{song.composer}</p>
-                              </div>
-                              <div className="flex items-center gap-1">
-                                  <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => moveSong(index, 'up')} disabled={index === 0}>
-                                      <ArrowUp className="h-4 w-4"/>
-                                  </Button>
-                                  <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => moveSong(index, 'down')} disabled={index === program.length - 1}>
-                                      <ArrowDown className="h-4 w-4"/>
-                                  </Button>
-                                  <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive" onClick={() => handleRemoveFromProgram(song.id)}>
-                                      <X className="h-4 w-4"/>
-                                  </Button>
-                              </div>
-                          </div>
-                          ))}
-                      </div>
-                  ) : (
-                      <div className="p-4 text-center text-sm text-muted-foreground">
-                          Select songs from the library to add them to the program.
-                      </div>
-                  )}
-                </ScrollArea>
+                <TooltipProvider>
+                  <ScrollArea className="h-72 w-full rounded-md border">
+                    {program.length > 0 ? (
+                        <div className="p-2 space-y-2">
+                            {program.map((song, index) => (
+                            <Tooltip key={song.id}>
+                                <TooltipTrigger asChild>
+                                    <div className="flex items-center justify-between p-2 rounded-md bg-muted/50 w-full">
+                                        <div>
+                                            <p className="text-sm font-medium">{song.title}</p>
+                                            <p className="text-xs text-muted-foreground">{song.composer}</p>
+                                        </div>
+                                        <div className="flex items-center gap-1">
+                                            <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => moveSong(index, 'up')} disabled={index === 0}>
+                                                <ArrowUp className="h-4 w-4"/>
+                                            </Button>
+                                            <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => moveSong(index, 'down')} disabled={index === program.length - 1}>
+                                                <ArrowDown className="h-4 w-4"/>
+                                            </Button>
+                                            <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive" onClick={() => handleRemoveFromProgram(song.id)}>
+                                                <X className="h-4 w-4"/>
+                                            </Button>
+                                        </div>
+                                    </div>
+                                </TooltipTrigger>
+                                 <TooltipContent>
+                                    <div className="p-2 text-sm">
+                                        <h4 className="font-bold mb-2">Performance History</h4>
+                                        {song.performanceHistory && song.performanceHistory.length > 0 ? (
+                                            <ul className="list-disc pl-4 space-y-1">
+                                            {song.performanceHistory
+                                                .sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+                                                .map((perf, index) => (
+                                                <li key={index}>{perf.concertName} ({new Date(perf.date).getFullYear()})</li>
+                                            ))}
+                                            </ul>
+                                        ) : (
+                                            <p>No performances recorded.</p>
+                                        )}
+                                    </div>
+                                </TooltipContent>
+                            </Tooltip>
+                            ))}
+                        </div>
+                    ) : (
+                        <div className="p-4 text-center text-sm text-muted-foreground">
+                            Select songs from the library to add them to the program.
+                        </div>
+                    )}
+                  </ScrollArea>
+                </TooltipProvider>
               </div>
               <div>
                   <h3 className="text-lg font-semibold mb-4">Music Library</h3>

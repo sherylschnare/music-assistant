@@ -76,33 +76,6 @@ async function seedInitialData() {
     console.log("Initial data seeding complete.");
 }
 
-async function clearFirestoreData() {
-  console.log("Clearing Firestore data...");
-  const songsCollectionRef = collection(db, 'songs');
-  const concertsCollectionRef = collection(db, 'concerts');
-  const usersCollectionRef = collection(db, 'users');
-  const taxonomyDocRef = doc(db, 'app-data', 'taxonomy');
-
-  const songsSnapshot = await getDocs(songsCollectionRef);
-  const concertsSnapshot = await getDocs(concertsCollectionRef);
-  const usersSnapshot = await getDocs(usersCollectionRef);
-
-  const batch = writeBatch(db);
-
-  songsSnapshot.forEach(doc => batch.delete(doc.ref));
-  concertsSnapshot.forEach(doc => batch.delete(doc.ref));
-  usersSnapshot.forEach(doc => batch.delete(doc.ref));
-  batch.delete(taxonomyDocRef);
-  
-  await batch.commit();
-  console.log("Firestore data cleared.");
-  try {
-    localStorage.clear();
-  } catch (e) {
-    console.error('Could not clear local storage.', e)
-  }
-}
-
 
 export const UserProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUserState] = useState<User>(defaultUser);
@@ -115,8 +88,10 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     async function setup() {
+        // NOTE: The automatic data clearing and seeding logic has been removed
+        // to make the database ready for production use.
         // await clearFirestoreData();
-        await seedInitialData();
+        // await seedInitialData();
 
         const usersUnsubscribe = onSnapshot(collection(db, "users"), (snapshot) => {
             const usersData = snapshot.docs.map(doc => doc.data() as User);
@@ -324,3 +299,5 @@ export const useUser = (): UserContextType => {
   }
   return context;
 };
+
+    

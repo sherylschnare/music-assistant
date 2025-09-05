@@ -14,6 +14,7 @@ import {
   LogOut,
   ChevronDown,
   Shield,
+  Upload,
 } from "lucide-react";
 
 import {
@@ -48,6 +49,7 @@ const navItems = [
   { href: "/dashboard/concerts", icon: Music, label: "Concerts" },
   { href: "/dashboard/copyright", icon: FileText, label: "Copyright Checker" },
   { href: "/dashboard/admin", icon: Shield, label: "Admin", requiredRole: "Music Director" },
+  { href: "/dashboard/import", icon: Upload, label: "Import Library", requiredRole: "Music Director" },
 ];
 
 function MainNav() {

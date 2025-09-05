@@ -36,7 +36,12 @@ export default function DashboardPage() {
     return null; // Or a loading indicator
   }
 
-  const upcomingConcert = concerts.length > 0 ? [...concerts].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())[0] : null;
+  const upcomingConcert = concerts.length > 0 
+    ? [...concerts]
+        .filter(c => new Date(c.date) >= new Date())
+        .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())[0] 
+    : null;
+    
   const recentlyPerformed = songs.filter(s => s.lastPerformed).sort((a,b) => new Date(b.lastPerformed!).getTime() - new Date(a.lastPerformed!).getTime()).slice(0, 5);
   
   return (

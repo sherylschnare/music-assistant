@@ -27,11 +27,26 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { useUser } from "@/context/user-context"
+import { PageHeader } from "@/components/page-header"
+import { Printer } from "lucide-react"
 
 import type { Song } from "@/lib/types"
 import { columns } from "./columns"
 import { useSearchParams } from "next/navigation"
 import { ChevronDown } from "lucide-react"
+
+function PrintButton() {
+    const handlePrint = () => {
+        window.print();
+    }
+    return (
+        <Button onClick={handlePrint}>
+            <Printer className="mr-2 h-4 w-4" />
+            Print Report
+        </Button>
+    )
+}
+
 
 export function ReportClient({ data }: { data: Song[] }) {
   const { musicTypes, musicSubtypes } = useUser();
@@ -79,6 +94,9 @@ export function ReportClient({ data }: { data: Song[] }) {
 
   return (
     <div className="w-full">
+       <PageHeader title="Reports" description="Generate and print reports for your music library." className="print:hidden">
+        <PrintButton />
+      </PageHeader>
       <div className="flex items-center py-4 gap-2 print:hidden">
         <Input
           placeholder="Filter by title..."

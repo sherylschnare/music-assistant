@@ -88,6 +88,17 @@ body {
 }
 
 @media print {
+  body * {
+    visibility: hidden;
+  }
+  #app-container > main, #app-container > main * {
+    visibility: visible;
+  }
+  #app-container {
+    position: absolute;
+    left: 0;
+    top: 0;
+  }
   .print\:hidden {
     display: none;
   }

@@ -3,29 +3,14 @@
 
 import React from "react"
 import { useUser } from "@/context/user-context"
-import { PageHeader } from "@/components/page-header"
 import { ReportClient } from "./client"
-import { Button } from "@/components/ui/button"
-import { Printer } from "lucide-react"
 
 export default function ReportsPage() {
   const { songs } = useUser();
 
-  const handlePrint = () => {
-    window.print();
-  }
-
   return (
     <div>
-      <PageHeader title="Reports" description="Generate and print reports for your music library." className="print:hidden">
-        <Button onClick={handlePrint}>
-          <Printer className="mr-2 h-4 w-4" />
-          Print Report
-        </Button>
-      </PageHeader>
-      <div>
-        <ReportClient data={songs} />
-      </div>
+      <ReportClient data={songs} />
     </div>
   )
 }

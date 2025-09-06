@@ -1,5 +1,5 @@
+import {createApiHandler} from '@genkit-ai/next/server';
+import {ai} from '@/ai/genkit';
+import '@/ai/flows/copyright-information-lookup';
 
-import {createApp} from '@genkit-ai/next/app';
-import '@/ai/flows/copyright-information-lookup.ts';
-
-export const {GET, POST} = createApp();
+export const {GET, POST} = createApiHandler({ai});

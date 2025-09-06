@@ -36,6 +36,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import Link from "next/link"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
+import { v4 as uuidv4 } from "uuid"
 
 function CreateConcertDialog() {
   const { songs, concerts, setConcerts, musicTypes, musicSubtypes } = useUser();
@@ -89,7 +90,7 @@ function CreateConcertDialog() {
       return;
     }
     const newConcert: Concert = {
-      id: `concert-${Date.now()}`,
+      id: uuidv4(),
       name: concertName,
       date: date.toISOString(),
       pieces: program,

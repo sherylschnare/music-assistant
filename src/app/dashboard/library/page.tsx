@@ -10,7 +10,7 @@ import type { Song } from "@/lib/types"
 import { v4 as uuidv4 } from 'uuid';
 
 export default function LibraryPage() {
-  const { songs, addSongs, setSongs } = useUser();
+  const { songs, addSongs } = useUser();
   const [isDialogOpen, setIsDialogOpen] = React.useState(false)
   const [editingSong, setEditingSong] = React.useState<Song | undefined>(undefined)
 

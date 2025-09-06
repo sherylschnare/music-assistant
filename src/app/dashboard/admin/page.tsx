@@ -28,6 +28,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { useUser } from "@/context/user-context"
 import { UserFormDialog } from "./user-form-dialog"
+import { v4 as uuidv4 } from "uuid"
 
 const getInitials = (name: string) => {
   return name
@@ -60,10 +61,10 @@ export default function AdminPage() {
   }
 
   const handleSaveUser = (savedUser: User) => {
-    if (savedUser.id) {
+    if (users.find(u => u.id === savedUser.id)) {
       setUsers(users.map(u => u.id === savedUser.id ? savedUser : u))
     } else {
-      const newUser = { ...savedUser, id: (users.length + 1).toString() }
+      const newUser = { ...savedUser, id: savedUser.id || uuidv4() }
       setUsers([...users, newUser])
     }
   }

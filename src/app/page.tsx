@@ -28,7 +28,7 @@ import type { User } from "@/lib/types"
 export default function LoginPage() {
   const router = useRouter()
   const { setUser, users, setUsers } = useUser()
-  const [selectedUserId, setSelectedUserId] = React.useState<string>(users[0]?.id || '')
+  const [selectedUserId, setSelectedUserId] = React.useState<string>('')
   const [password, setPassword] = React.useState("")
   const [confirmPassword, setConfirmPassword] = React.useState("")
   const [error, setError] = React.useState<string | null>(null)

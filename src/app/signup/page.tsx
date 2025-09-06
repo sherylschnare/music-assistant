@@ -1,3 +1,4 @@
+
 'use client'
 
 import Link from "next/link"
@@ -15,6 +16,7 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { AppLogo } from "@/components/icons"
+import { v4 as uuidv4 } from "uuid"
 
 export default function SignupPage() {
     const router = useRouter()
@@ -47,7 +49,7 @@ export default function SignupPage() {
       }
 
       const newUser = {
-        id: (users.length + 1).toString(),
+        id: uuidv4(),
         name: `${firstName} ${lastName}`,
         email,
         role: "Musician" as const,

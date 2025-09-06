@@ -1,3 +1,4 @@
+
 'use server';
 
 /**
@@ -6,7 +7,6 @@
 
 import { z } from 'zod';
 import { ai } from '@/ai/genkit';
-import { googleAI } from '@genkit-ai/googleai';
 
 // --------------------
 // Schemas
@@ -51,15 +51,15 @@ Analyze this information and provide a concise summary.
 // --------------------
 // Flow definition
 // --------------------
-export const copyrightInformationLookupFlow = ai.defineFlow(
+const copyrightInformationLookupFlow = ai.defineFlow(
   {
     name: 'copyrightInformationLookupFlow',
     inputSchema: CopyrightInformationLookupInputSchema,
     outputSchema: CopyrightInformationLookupOutputSchema,
   },
   async (input) => {
-    const llmResponse = await copyrightLookupPrompt(input);
-    return llmResponse.output!;
+    const { output } = await copyrightLookupPrompt(input);
+    return output!;
   }
 );
 
@@ -69,5 +69,5 @@ export const copyrightInformationLookupFlow = ai.defineFlow(
 export async function copyrightInformationLookup(
   input: CopyrightInformationLookupInput
 ): Promise<CopyrightInformationLookupOutput> {
-  return copyrightInformationLookupFlow(input);
+  return await copyrightInformationLookupFlow(input);
 }

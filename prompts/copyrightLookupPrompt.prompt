@@ -1,0 +1,20 @@
+---
+name: copyrightLookupPrompt
+model: gemini-pro
+input:
+  schema:
+    title: string
+    composer: string
+    lyricist: string
+    arranger: string
+output:
+  format: json
+  schema:
+    summary: string
+---
+You are an expert in music copyright law. Please provide a summary of the copyright information for the following song, including the copyright holder, any relevant licensing information, and any other important details related to the copyright of the song.
+
+Song Title: {{title}}
+Composer: {{composer}}
+Lyricist: {{lyricist}}
+Arranger: {{arranger}}

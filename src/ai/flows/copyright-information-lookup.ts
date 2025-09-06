@@ -9,7 +9,9 @@
  * - CopyrightInformationLookupOutput - The return type for the copyrightInformationLookup function.
  */
 import {z} from 'zod';
-import {ai} from '../genkit';
+import {defineFlow, generate} from 'genkit/flow';
+import {googleAI} from '@genkit-ai/googleai';
+import {prompt} from '@genkit-ai/dotprompt';
 
 const CopyrightInformationLookupInputSchema = z.object({
   title: z.string().describe('The title of the song.'),
@@ -28,34 +30,31 @@ export type CopyrightInformationLookupOutput = z.infer<
   typeof CopyrightInformationLookupOutputSchema
 >;
 
-export async function copyrightInformationLookup(
-  input: CopyrightInformationLookupInput
-): Promise<CopyrightInformationLookupOutput> {
-  return copyrightInformationLookupFlow(input);
-}
+const copyrightLookupPrompt = await prompt('copyrightLookupPrompt');
 
-const copyrightInformationLookupPrompt = ai.definePrompt(
-  {
-    name: 'copyrightInformationLookupPrompt',
-    input: {schema: CopyrightInformationLookupInputSchema},
-    output: {schema: CopyrightInformationLookupOutputSchema},
-    prompt: `You are an expert in music copyright law. Please provide a summary of the copyright information for the following song, including the copyright holder, any relevant licensing information, and any other important details related to the copyright of the song.
-
-Song Title: {{title}}
-Composer: {{composer}}
-Lyricist: {{lyricist}}
-Arranger: {{arranger}}`,
-  },
-);
-
-export const copyrightInformationLookupFlow = ai.defineFlow(
+export const copyrightInformationLookupFlow = defineFlow(
   {
     name: 'copyrightInformationLookupFlow',
     inputSchema: CopyrightInformationLookupInputSchema,
     outputSchema: CopyrightInformationLookupOutputSchema,
   },
   async (input) => {
-    const llmResponse = await copyrightInformationLookupPrompt(input);
-    return llmResponse;
+    const llmResponse = await generate({
+      prompt: copyrightLookupPrompt,
+      model: googleAI.model('gemini-pro'),
+      input: input,
+      output: {
+        schema: CopyrightInformationLookupOutputSchema,
+      },
+    });
+
+    return llmResponse.output()!;
   }
 );
+
+
+export async function copyrightInformationLookup(
+  input: CopyrightInformationLookupInput
+): Promise<CopyrightInformationLookupOutput> {
+  return copyrightInformationLookupFlow(input);
+}

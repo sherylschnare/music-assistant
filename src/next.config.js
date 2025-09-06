@@ -8,6 +8,7 @@ const nextConfig = {
   },
   webpack: (config, { isServer }) => {
     config.module.exprContextCritical = false;
+    config.externals.push('pino-pretty', 'lokijs', 'encoding');
 
     return config;
   },

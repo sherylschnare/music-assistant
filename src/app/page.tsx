@@ -3,7 +3,7 @@
 
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import React from "react"
+import React, { useState, FormEvent } from "react"
 import { AppLogo } from "@/components/icons"
 import { Button } from "@/components/ui/button"
 import {
@@ -13,69 +13,63 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
-import { useUser } from "@/context/user-context"
-import type { User } from "@/lib/types"
+import { getAuth, signInWithEmailAndPassword } from "firebase/auth";
+import { useToast } from "@/hooks/use-toast"
 
 export default function LoginPage() {
   const router = useRouter()
-  const { setUser, users, setUsers } = useUser()
-  const [selectedUserId, setSelectedUserId] = React.useState<string>('')
-  const [password, setPassword] = React.useState("")
-  const [confirmPassword, setConfirmPassword] = React.useState("")
-  const [error, setError] = React.useState<string | null>(null)
+  const { toast } = useToast()
+  const [email, setEmail] = useState("")
+  const [password, setPassword] = useState("")
+  const [error, setError] = useState<string | null>(null)
+  const [loading, setLoading] = useState(false)
   
-  const selectedUser = users.find(u => u.id === selectedUserId)
+  const auth = getAuth();
 
-  React.useEffect(() => {
-    if (users.length > 0 && !selectedUserId) {
-      setSelectedUserId(users[0].id)
-    }
-    // Reset password fields when user changes
-    setPassword("")
-    setConfirmPassword("")
-    setError(null)
-  }, [users, selectedUserId]);
-
-
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: FormEvent) => {
     e.preventDefault()
-    if (!selectedUser) return;
-
-    // First-time login: setting password
-    if (!selectedUser.password) {
-      if (password.length < 8) {
-        setError("Password must be at least 8 characters long.");
-        return;
-      }
-      if (password !== confirmPassword) {
-        setError("Passwords do not match.");
-        return;
-      }
-      const updatedUser = { ...selectedUser, password: password };
-      const updatedUsers = users.map(u => u.id === selectedUser.id ? updatedUser : u)
-      setUsers(updatedUsers);
-      setUser(updatedUser);
+    setLoading(true)
+    setError(null)
+    
+    try {
+      await signInWithEmailAndPassword(auth, email, password)
+      toast({
+        title: "Login Successful",
+        description: "You have been successfully logged in.",
+      })
       router.push("/dashboard")
-    } else { // Existing user: checking password
-      if (password !== selectedUser.password) {
-        setError("Incorrect password.");
-        return;
+    } catch (error: any) {
+      const errorCode = error.code;
+      let errorMessage = "An unknown error occurred.";
+      switch (errorCode) {
+        case 'auth/invalid-email':
+          errorMessage = 'Please enter a valid email address.';
+          break;
+        case 'auth/user-disabled':
+          errorMessage = 'This account has been disabled.';
+          break;
+        case 'auth/user-not-found':
+          errorMessage = 'No account found with this email.';
+          break;
+        case 'auth/wrong-password':
+          errorMessage = 'Incorrect password. Please try again.';
+          break;
+        default:
+          errorMessage = 'Failed to log in. Please check your credentials.';
+          break;
       }
-      setUser(selectedUser);
-      router.push("/dashboard")
+      setError(errorMessage);
+      toast({
+        variant: "destructive",
+        title: "Login Failed",
+        description: errorMessage,
+      })
+    } finally {
+      setLoading(false)
     }
   }
-  
-  if (!users.length) return null;
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-background">
@@ -86,58 +80,48 @@ export default function LoginPage() {
           </div>
           <CardTitle className="text-2xl font-headline text-center">Tartones</CardTitle>
           <CardDescription className="text-center">
-            Select a user profile to log in
+            Enter your credentials to access your account
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleLogin} className="grid gap-4">
             <div className="grid gap-2">
-              <Label htmlFor="user-select">User Role</Label>
-              <Select value={selectedUserId} onValueChange={setSelectedUserId}>
-                <SelectTrigger id="user-select">
-                  <SelectValue placeholder="Select a user" />
-                </SelectTrigger>
-                <SelectContent>
-                  {users.map(user => (
-                    <SelectItem key={user.id} value={user.id}>
-                      {user.name} ({user.role})
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Label htmlFor="email">Email</Label>
+              <Input 
+                id="email" 
+                type="email" 
+                placeholder="m@example.com"
+                value={email} 
+                onChange={e => setEmail(e.target.value)} 
+                required 
+              />
             </div>
-            
-            {selectedUser && !selectedUser.password ? (
-              <>
-                <CardDescription className="text-center pt-2">
-                  This is your first time logging in. Please set a password.
-                </CardDescription>
-                <div className="grid gap-2">
-                  <Label htmlFor="password">New Password</Label>
-                  <Input id="password" type="password" value={password} onChange={e => setPassword(e.target.value)} required />
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="confirm-password">Confirm Password</Label>
-                  <Input id="confirm-password" type="password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} required />
-                </div>
-              </>
-            ) : (
-              <div className="grid gap-2">
-                <Label htmlFor="password">Password</Label>
-                <Input id="password" type="password" value={password} onChange={e => setPassword(e.target.value)} required />
-              </div>
-            )}
+            <div className="grid gap-2">
+              <Label htmlFor="password">Password</Label>
+              <Input 
+                id="password" 
+                type="password" 
+                value={password} 
+                onChange={e => setPassword(e.target.value)} 
+                required 
+              />
+            </div>
             
             {error && <p className="text-sm text-destructive text-center">{error}</p>}
 
-            <Button type="submit" className="w-full bg-primary hover:bg-primary/90">
-              {selectedUser && !selectedUser.password ? 'Set Password & Login' : 'Login'}
+            <Button type="submit" className="w-full bg-primary hover:bg-primary/90" disabled={loading}>
+              {loading ? 'Logging in...' : 'Login'}
             </Button>
           </form>
           <div className="mt-4 text-center text-sm">
             Don&apos;t have an account?{" "}
             <Link href="/signup" className="underline">
               Sign up
+            </Link>
+          </div>
+          <div className="mt-2 text-center text-sm">
+            <Link href="/forgot-password" className="underline">
+              Forgot Password?
             </Link>
           </div>
         </CardContent>

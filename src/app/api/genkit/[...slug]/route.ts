@@ -1,4 +1,9 @@
+import { copyrightInformationLookupFlow } from '@/ai/flows/copyright-information-lookup';
 import { createApiHandler } from '@genkit-ai/next/server';
-import '@/ai/flows/copyright-information-lookup';
 
-export const { GET, POST } = createApiHandler();
+const handler = createApiHandler({
+  flows: [copyrightInformationLookupFlow],
+});
+
+export const GET = handler;
+export const POST = handler;

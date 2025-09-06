@@ -2,13 +2,14 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { collection, getDocs, doc, setDoc, onSnapshot, writeBatch, getDoc, updateDoc } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { collection, getDocs, doc, setDoc, onSnapshot, writeBatch, getDoc, updateDoc, Timestamp } from 'firebase/firestore';
+import { getAuth, onAuthStateChanged, User as FirebaseUser } from 'firebase/auth';
+import { db, auth } from '@/lib/firebase';
 import type { Song, User, Concert } from '@/lib/types';
 import { users as defaultUsers, songs as defaultSongs, concerts as defaultConcerts } from '@/lib/data';
 
 interface UserContextType {
-  user: User;
+  user: User | null;
   setUser: (user: Partial<User>) => void;
   users: User[];
   setUsers: (users: User[]) => void;
@@ -24,9 +25,34 @@ interface UserContextType {
   setMusicSubtypes: (subtypes: string[]) => void;
 }
 
+// Helper function to convert Firestore Timestamps to ISO strings
+const convertTimestamps = (data: any) => {
+  if (!data) return data;
+  
+  // Convert Timestamps in Concerts
+  if (data.date && data.date instanceof Timestamp) {
+    data.date = data.date.toDate().toISOString();
+  }
+  if (data.pieces && Array.isArray(data.pieces)) {
+    data.pieces = data.pieces.map(convertTimestamps);
+  }
+
+  // Convert Timestamps in Songs
+  if (data.lastPerformed && data.lastPerformed instanceof Timestamp) {
+    data.lastPerformed = data.lastPerformed.toDate().toISOString();
+  }
+  if (data.performanceHistory && Array.isArray(data.performanceHistory)) {
+    data.performanceHistory = data.performanceHistory.map(h => 
+        h.date && h.date instanceof Timestamp ? { ...h, date: h.date.toDate().toISOString() } : h
+    );
+  }
+  
+  return data;
+};
+
+
 const UserContext = createContext<UserContextType | undefined>(undefined);
 
-const defaultUser: User = defaultUsers[0];
 const baseSubtypes = ["Christmas", "Easter", "Spring", "Winter", "Fall", "Summer", "Celtic", "Pop"];
 const baseTypes = ["Choral", "Orchestral", "Band", "Solo", "Chamber", "Holiday"];
 
@@ -85,69 +111,74 @@ async function seedInitialData() {
 
 
 export const UserProvider = ({ children }: { children: ReactNode }) => {
-  const [user, setUserState] = useState<User>(defaultUser);
+  const [user, setUserState] = useState<User | null>(null); // Start with null user
   const [users, setUsersState] = useState<User[]>([]);
   const [songs, setSongsState] = useState<Song[]>([]);
   const [concerts, setConcertsState] = useState<Concert[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(true); // True while checking auth state
   const [musicTypes, setMusicTypesState] = useState<string[]>([]);
   const [musicSubtypes, setMusicSubtypesState] = useState<string[]>([]);
 
   useEffect(() => {
-    async function setup() {
-        await seedInitialData();
+    seedInitialData();
 
-        const usersUnsubscribe = onSnapshot(collection(db, "users"), (snapshot) => {
-            const usersData = snapshot.docs.map(doc => doc.data() as User);
-            setUsersState(usersData);
-            if(loading) setLoading(false);
-        });
-
-        const songsUnsubscribe = onSnapshot(collection(db, "songs"), (snapshot) => {
-            const songsData = snapshot.docs.map(doc => doc.data() as Song);
-            setSongsState(songsData);
-        });
-
-        const taxonomyUnsubscribe = onSnapshot(doc(db, "app-data", "taxonomy"), (snapshot) => {
-            if (snapshot.exists()) {
-                const data = snapshot.data();
-                setMusicTypesState(data.types || []);
-                setMusicSubtypesState(data.subtypes || []);
-            } else {
-                setMusicTypesState(baseTypes);
-                setMusicSubtypesState(baseSubtypes);
-            }
-        });
-
-        const concertsUnsubscribe = onSnapshot(collection(db, "concerts"), (snapshot) => {
-            const concertsData = snapshot.docs.map(doc => doc.data() as Concert);
-            setConcertsState(concertsData);
-        });
-
-        try {
-          const storedUser = localStorage.getItem('userProfile');
-          if (storedUser) {
-            setUserState(JSON.parse(storedUser));
-          } else if (users.length > 0) {
-            setUserState(users[0]);
-          }
-        } catch(e) {
-          console.error("Failed to load user from localstorage", e)
-          if (users.length > 0) {
-            setUserState(users[0]);
-          }
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser: FirebaseUser | null) => {
+      if (firebaseUser) {
+        // User is signed in.
+        const userDocRef = doc(db, 'users', firebaseUser.uid);
+        const userDocSnap = await getDoc(userDocRef);
+        if (userDocSnap.exists()) {
+          setUserState({ id: userDocSnap.id, ...userDocSnap.data() } as User);
+        } else {
+          console.log("User exists in Auth, but not in Firestore DB. This may happen during signup.");
+           setUserState(null);
         }
+      } else {
+        // User is signed out.
+        setUserState(null);
+      }
+      setLoading(false);
+    });
 
-        return () => {
-            usersUnsubscribe();
-            songsUnsubscribe();
-            concertsUnsubscribe();
-            taxonomyUnsubscribe();
-        };
-    }
+    return () => unsubscribe();
+  }, []);
+  
+  
+  useEffect(() => {
+    const usersUnsubscribe = onSnapshot(collection(db, "users"), (snapshot) => {
+        const usersData = snapshot.docs.map(doc => doc.data() as User);
+        setUsersState(usersData);
+    });
 
-    setup();
-  }, [loading, users.length]);
+    const songsUnsubscribe = onSnapshot(collection(db, "songs"), (snapshot) => {
+        const songsData = snapshot.docs.map(doc => convertTimestamps(doc.data()) as Song);
+        setSongsState(songsData);
+    });
+
+    const taxonomyUnsubscribe = onSnapshot(doc(db, "app-data", "taxonomy"), (snapshot) => {
+        if (snapshot.exists()) {
+            const data = snapshot.data();
+            setMusicTypesState(data.types || []);
+            setMusicSubtypesState(data.subtypes || []);
+        } else {
+            setMusicTypesState(baseTypes);
+            setMusicSubtypesState(baseSubtypes);
+        }
+    });
+
+    const concertsUnsubscribe = onSnapshot(collection(db, "concerts"), (snapshot) => {
+        const concertsData = snapshot.docs.map(doc => convertTimestamps(doc.data()) as Concert);
+        setConcertsState(concertsData);
+    });
+    
+    return () => {
+        usersUnsubscribe();
+        songsUnsubscribe();
+        concertsUnsubscribe();
+        taxonomyUnsubscribe();
+    };
+  }, []);
+
 
   const setUsers = async (newUsers: User[]) => {
     try {
@@ -195,17 +226,14 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
       
       const batch = writeBatch(db);
       
-      // Get IDs of new concerts
       const newConcertIds = new Set(newConcerts.map(c => c.id));
       
-      // Delete concerts that are not in the new list
       existingDocs.forEach(doc => {
         if (!newConcertIds.has(doc.id)) {
             batch.delete(doc.ref);
         }
       });
       
-      // Set/update new concerts
       newConcerts.forEach(c => {
         const docRef = doc(db, 'concerts', c.id);
         batch.set(docRef, c, { merge: true });
@@ -219,16 +247,15 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   }
 
   const updateUser = async (updatedFields: Partial<User>) => {
+    if (!user) return; // No user to update
     const updatedUser = { ...user, ...updatedFields };
     try {
-      localStorage.setItem('userProfile', JSON.stringify(updatedUser));
       setUserState(updatedUser);
-      
       const userRef = doc(db, 'users', updatedUser.id);
       await setDoc(userRef, updatedUser, { merge: true });
 
     } catch (error) {
-      console.error("Failed to save user to localStorage/Firestore", error);
+      console.error("Failed to save user to Firestore", error);
     }
   }
 
@@ -262,7 +289,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
 
   return (
     <UserContext.Provider value={value}>
-      {!loading && children}
+      {children}
     </UserContext.Provider>
   );
 };

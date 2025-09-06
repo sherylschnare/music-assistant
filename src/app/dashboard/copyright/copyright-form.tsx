@@ -5,7 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
 import { runFlow } from '@genkit-ai/next/client'
-import { copyrightInformationLookup } from '@/ai/flows/copyright-information-lookup'
+import { copyrightInformationLookupFlow } from '@/ai/flows/copyright-information-lookup'
 import React from "react"
 import { useToast } from "@/hooks/use-toast"
 
@@ -54,7 +54,7 @@ export function CopyrightForm() {
     setLoading(true)
     setResult(null)
     try {
-      const response = await runFlow(copyrightInformationLookup, {
+      const response = await runFlow(copyrightInformationLookupFlow, {
         ...values,
         lyricist: values.lyricist || 'N/A',
         arranger: values.arranger || 'N/A'

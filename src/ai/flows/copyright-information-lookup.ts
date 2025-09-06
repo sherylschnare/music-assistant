@@ -35,23 +35,14 @@ const copyrightLookupPrompt = ai.definePrompt({
     name: 'copyrightLookupPrompt',
     input: { schema: CopyrightInformationLookupInputSchema },
     output: { schema: CopyrightInformationLookupOutputSchema },
-    prompt: `You are a copyright expert for musical compositions. Given the details of a song, provide a summary of its likely copyright status. Consider the composer's death date, the lyricist, and the arranger.
-
-Song Details:
-Title: {{{title}}}
-Composer: {{{composer}}}
-Lyricist: {{{lyricist}}}
-Arranger: {{{arranger}}}
-
-Analyze this information and provide a concise summary.
-`,
+    prompt: `You are a copyright expert for musical compositions. Given the details of a song, provide a summary of its likely copyright status. Consider the composer's death date, the lyricist, and the arranger.\n\nSong Details:\nTitle: {{{title}}}\nComposer: {{{composer}}}\nLyricist: {{{lyricist}}}\nArranger: {{{arranger}}}\n\nAnalyze this information and provide a concise summary.\n`,
 });
 
 
 // --------------------
 // Flow definition
 // --------------------
-const copyrightInformationLookupFlow = ai.defineFlow(
+export const copyrightInformationLookupFlow = ai.defineFlow(
   {
     name: 'copyrightInformationLookupFlow',
     inputSchema: CopyrightInformationLookupInputSchema,

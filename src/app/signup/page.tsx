@@ -3,8 +3,7 @@
 
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import React from "react"
-import { useUser } from "@/context/user-context"
+import React, { useState, FormEvent } from "react"
 import { Button } from "@/components/ui/button"
 import {
   Card,
@@ -16,14 +15,22 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { AppLogo } from "@/components/icons"
+import { getAuth, createUserWithEmailAndPassword } from "firebase/auth"
+import { doc, setDoc } from "firebase/firestore"
+import { db } from "@/lib/firebase"
+import { useToast } from "@/hooks/use-toast"
 
 export default function SignupPage() {
     const router = useRouter()
-    const { users, setUsers, setUser } = useUser();
-    const [error, setError] = React.useState<string | null>(null);
+    const { toast } = useToast()
+    const [error, setError] = useState<string | null>(null)
+    const [loading, setLoading] = useState(false)
 
-    const handleSignup = (e: React.FormEvent<HTMLFormElement>) => {
+    const handleSignup = async (e: FormEvent<HTMLFormElement>) => {
       e.preventDefault()
+      setLoading(true)
+      setError(null)
+      
       const form = e.currentTarget;
       const formData = new FormData(form);
       const firstName = formData.get("first-name") as string;
@@ -34,30 +41,61 @@ export default function SignupPage() {
 
       if (password !== confirmPassword) {
         setError("Passwords do not match.");
+        setLoading(false)
         return;
       }
       
       if (password.length < 8) {
         setError("Password must be at least 8 characters long.");
+        setLoading(false)
         return;
       }
 
-      if (users.some(u => u.email.toLowerCase() === email.toLowerCase())) {
-        setError("An account with this email already exists.");
-        return;
+      try {
+        const auth = getAuth()
+        const userCredential = await createUserWithEmailAndPassword(auth, email, password)
+        const user = userCredential.user;
+
+        // Create a new user document in Firestore
+        await setDoc(doc(db, "users", user.uid), {
+            id: user.uid,
+            name: `${firstName} ${lastName}`,
+            email: email,
+            role: "Musician",
+        });
+        
+        toast({
+          title: "Account Created",
+          description: "Your account has been successfully created.",
+        })
+        router.push("/dashboard");
+
+      } catch (error: any) {
+        const errorCode = error.code;
+        let errorMessage = "An unknown error occurred.";
+        switch (errorCode) {
+            case 'auth/email-already-in-use':
+                errorMessage = 'This email is already in use.';
+                break;
+            case 'auth/invalid-email':
+                errorMessage = 'Please enter a valid email address.';
+                break;
+            case 'auth/weak-password':
+                errorMessage = 'The password is too weak. Please choose a stronger password.';
+                break;
+            default:
+                errorMessage = 'Failed to create an account. Please try again.';
+                break;
+        }
+        setError(errorMessage)
+        toast({
+            variant: "destructive",
+            title: "Signup Failed",
+            description: errorMessage,
+        })
+      } finally {
+        setLoading(false)
       }
-
-      const newUser = {
-        id: crypto.randomUUID(),
-        name: `${firstName} ${lastName}`,
-        email,
-        role: "Musician" as const,
-        password: password,
-      };
-
-      setUsers([...users, newUser]);
-      setUser(newUser);
-      router.push("/dashboard");
     }
 
   return (
@@ -105,8 +143,8 @@ export default function SignupPage() {
 
             {error && <p className="text-sm text-destructive text-center">{error}</p>}
 
-            <Button type="submit" className="w-full bg-primary hover:bg-primary/90">
-              Create an account
+            <Button type="submit" className="w-full bg-primary hover:bg-primary/90" disabled={loading}>
+              {loading ? 'Creating Account...' : 'Create an account'}
             </Button>
           </form>
           <div className="mt-4 text-center text-sm">

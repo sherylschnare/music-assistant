@@ -1,20 +1,26 @@
 
-import { initializeApp, getApp, getApps } from "firebase/app";
-import { getFirestore } from "firebase/firestore";
+import { initializeApp, getApps, getApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
+import { getFirestore } from "firebase/firestore";
 
 const firebaseConfig = {
-  projectId: "orchestra-assistant",
-  appId: "1:213349109970:web:63c67a4d0bfb2d7cb91d0b",
-  storageBucket: "orchestra-assistant.firebasestorage.app",
   apiKey: "AIzaSyADKAxsk0ohucyB9VixUhGht-pzm2Ho8k4",
   authDomain: "orchestra-assistant.firebaseapp.com",
+  projectId: "orchestra-assistant",
+  storageBucket: "orchestra-assistant.firebasestorage.app",
   messagingSenderId: "213349109970",
+  appId: "1:213349109970:web:63c67a4d0bfb2d7cb91d0b"
 };
 
 // Initialize Firebase
-const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
-const db = getFirestore(app);
-const auth = getAuth(app);
+let app;
+if (!getApps().length) {
+  app = initializeApp(firebaseConfig);
+} else {
+  app = getApp();
+}
 
-export { app, db, auth };
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+export { app, auth, db };

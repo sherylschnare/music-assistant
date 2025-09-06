@@ -2,7 +2,8 @@
 'use client'
 
 import Link from "next/link";
-import { Plus, Library, Music } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Plus, Library, Music, LogOut } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -13,6 +14,9 @@ import {
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/page-header";
 import { useUser } from "@/context/user-context";
+import { getAuth, signOut } from "firebase/auth";
+import { useToast } from "@/hooks/use-toast";
+import React from "react";
 
 function StatCard({ title, value, icon: Icon, description }: { title: string, value: string, icon: React.ElementType, description: string }) {
   return (
@@ -30,30 +34,69 @@ function StatCard({ title, value, icon: Icon, description }: { title: string, va
 }
 
 export default function DashboardPage() {
-  const { user, songs, concerts } = useUser();
+  const { user, songs, concerts, loading } = useUser();
+  const router = useRouter();
+  const { toast } = useToast();
 
-  if (!concerts || !songs) {
-    return null; // Or a loading indicator
+  React.useEffect(() => {
+    if (!loading && !user) {
+      router.push('/'); // Redirect to login if not authenticated
+    }
+  }, [user, loading, router]);
+
+  const handleLogout = async () => {
+    const auth = getAuth();
+    try {
+      await signOut(auth);
+      toast({
+        title: "Logged Out",
+        description: "You have been successfully logged out."
+      })
+      router.push('/');
+    } catch (error) {
+      console.error("Logout failed:", error);
+      toast({
+        variant: "destructive",
+        title: "Logout Failed",
+        description: "An error occurred while logging out. Please try again."
+      })
+    }
   }
 
-  const upcomingConcert = concerts.length > 0 
+  if (loading || !user) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <p>Loading...</p>
+      </div>
+    );
+  }
+
+  const upcomingConcert = concerts.length > 0
     ? [...concerts]
         .filter(c => new Date(c.date) >= new Date())
-        .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())[0] 
+        .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())[0]
     : null;
-    
+
   const recentlyPerformed = songs.filter(s => s.lastPerformed).sort((a,b) => new Date(b.lastPerformed!).getTime() - new Date(a.lastPerformed!).getTime()).slice(0, 5);
-  
+
   return (
     <div>
-      <PageHeader title={`Welcome, ${user.name}!`} description="Here's a snapshot of your orchestra's activity.">
-        <Button asChild>
-          <Link href="/dashboard/library">
-            <Plus className="mr-2 h-4 w-4" /> Add New Music
-          </Link>
-        </Button>
+      <PageHeader 
+        title={`Welcome, ${user.name}!`}
+        description="Here's a snapshot of your orchestra's activity."
+      >
+        <div className="flex items-center gap-4">
+          <Button asChild>
+            <Link href="/dashboard/library">
+              <Plus className="mr-2 h-4 w-4" /> Add New Music
+            </Link>
+          </Button>
+          <Button variant="outline" onClick={handleLogout}>
+            <LogOut className="mr-2 h-4 w-4" /> Logout
+          </Button>
+        </div>
       </PageHeader>
-      
+
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 mb-8">
         <StatCard title="Total Pieces" value={songs.length.toString()} icon={Library} description="Music pieces in your library" />
         <StatCard title="Concerts Planned" value={concerts.length.toString()} icon={Music} description="Total concerts in history" />
@@ -94,30 +137,4 @@ export default function DashboardPage() {
         )}
         <Card>
           <CardHeader>
-            <CardTitle>Recently Performed</CardTitle>
-            <CardDescription>A look at what you've played recently.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            {recentlyPerformed.length > 0 ? (
-              <div className="space-y-4">
-                {recentlyPerformed.map(song => (
-                  <div key={song.id} className="flex items-center">
-                    <div className="ml-4 space-y-1">
-                      <p className="text-sm font-medium leading-none">{song.title}</p>
-                      <p className="text-sm text-muted-foreground">{song.composer}</p>
-                    </div>
-                    <div className="ml-auto font-medium text-sm">
-                      {song.lastPerformed ? new Date(song.lastPerformed).toLocaleDateString() : 'N/A'}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p className="text-sm text-muted-foreground">No recently performed pieces.</p>
-            )}
-          </CardContent>
-        </Card>
-      </div>
-    </div>
-  );
-}
+            <CardTitle>Recently Performed</C

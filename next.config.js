@@ -8,6 +8,7 @@ const nextConfig = {
   },
   webpack: (config, { isServer }) => {
     config.module.exprContextCritical = false;
+    config.externals.push('pino-pretty', 'lokijs', 'encoding');
     
     // Alias for handlebars to use the browser-compatible version
     config.resolve.alias['handlebars'] = 'handlebars/dist/handlebars.js';

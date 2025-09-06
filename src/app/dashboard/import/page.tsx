@@ -11,7 +11,6 @@ import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import type { Song } from '@/lib/types';
 import { Loader2, Upload } from 'lucide-react';
-import { v4 as uuidv4 } from 'uuid';
 
 export default function ImportPage() {
   const { songs, setSongs } = useUser();
@@ -77,7 +76,7 @@ export default function ImportPage() {
             } else {
               // Create new song
               const newSong: Song = {
-                id: uuidv4(),
+                id: crypto.randomUUID(),
                 title: rowTitle,
                 composer: row.Composer || '',
                 copyright: row.Copyright || '',

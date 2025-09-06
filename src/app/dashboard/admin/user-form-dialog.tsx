@@ -26,7 +26,6 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import type { User } from '@/lib/types'
-import { v4 as uuidv4 } from 'uuid';
 
 const formSchema = z.object({
   id: z.string().optional(),
@@ -63,7 +62,7 @@ export function UserFormDialog({ isOpen, onOpenChange, onSave, user }: UserFormD
 
   const onSubmit = (values: UserFormValues) => {
     // Ensure password is not sent if empty, it's handled on first login
-    const userToSave = { ...values, id: values.id || uuidv4() };
+    const userToSave = { ...values, id: values.id || crypto.randomUUID() };
     if (user) { // If editing, keep old password if not changed
       userToSave.password = user.password;
     } else {

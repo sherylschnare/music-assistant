@@ -7,7 +7,6 @@ import { PageHeader } from "@/components/page-header"
 import { MusicLibraryClient } from "./client"
 import { SongFormDialog } from "./song-form-dialog"
 import type { Song } from "@/lib/types"
-import { v4 as uuidv4 } from 'uuid';
 
 export default function LibraryPage() {
   const { songs, addSongs } = useUser();
@@ -22,7 +21,7 @@ export default function LibraryPage() {
   const handleSaveSong = async (songToSave: Omit<Song, 'id' | 'performanceHistory' | 'lastPerformed'>) => {
     const newSong: Song = {
         ...songToSave,
-        id: uuidv4(),
+        id: crypto.randomUUID(),
         performanceHistory: [],
     };
     await addSongs([newSong]);

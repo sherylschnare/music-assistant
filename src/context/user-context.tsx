@@ -6,7 +6,6 @@ import { collection, getDocs, doc, setDoc, onSnapshot, writeBatch, getDoc, updat
 import { db } from '@/lib/firebase';
 import type { Song, User, Concert } from '@/lib/types';
 import { users as defaultUsers, songs as defaultSongs, concerts as defaultConcerts } from '@/lib/data';
-import { v4 as uuidv4 } from 'uuid';
 
 interface UserContextType {
   user: User;
@@ -148,7 +147,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     }
 
     setup();
-  }, [loading]);
+  }, [loading, users.length]);
 
   const setUsers = async (newUsers: User[]) => {
     try {

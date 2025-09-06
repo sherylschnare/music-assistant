@@ -16,7 +16,6 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { AppLogo } from "@/components/icons"
-import { v4 as uuidv4 } from "uuid"
 
 export default function SignupPage() {
     const router = useRouter()
@@ -49,7 +48,7 @@ export default function SignupPage() {
       }
 
       const newUser = {
-        id: uuidv4(),
+        id: crypto.randomUUID(),
         name: `${firstName} ${lastName}`,
         email,
         role: "Musician" as const,

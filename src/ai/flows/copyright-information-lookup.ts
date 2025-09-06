@@ -1,18 +1,16 @@
-
 'use server';
 
 /**
  * @fileOverview Looks up copyright information for a given song using a generative AI tool.
- *
- * - copyrightInformationLookup - A function that handles the copyright information lookup process.
- * - CopyrightInformationLookupInput - The input type for the copyrightInformationLookup function.
- * - CopyrightInformationLookupOutput - The return type for the copyrightInformationLookup function.
  */
-import {z} from 'zod';
-import {defineFlow, generate} from 'genkit/flow';
-import {googleAI} from '@genkit-ai/googleai';
-import {prompt} from '@genkit-ai/dotprompt';
 
+import { z } from 'zod';
+import { ai } from '@/ai/genkit';
+import { googleAI } from '@genkit-ai/googleai';
+
+// --------------------
+// Schemas
+// --------------------
 const CopyrightInformationLookupInputSchema = z.object({
   title: z.string().describe('The title of the song.'),
   composer: z.string().describe('The composer of the song.'),
@@ -30,29 +28,44 @@ export type CopyrightInformationLookupOutput = z.infer<
   typeof CopyrightInformationLookupOutputSchema
 >;
 
-const copyrightLookupPrompt = await prompt('copyrightLookupPrompt');
+// --------------------
+// Prompt definition
+// --------------------
+const copyrightLookupPrompt = ai.definePrompt({
+    name: 'copyrightLookupPrompt',
+    input: { schema: CopyrightInformationLookupInputSchema },
+    output: { schema: CopyrightInformationLookupOutputSchema },
+    prompt: `You are a copyright expert for musical compositions. Given the details of a song, provide a summary of its likely copyright status. Consider the composer's death date, the lyricist, and the arranger.
 
-export const copyrightInformationLookupFlow = defineFlow(
+Song Details:
+Title: {{{title}}}
+Composer: {{{composer}}}
+Lyricist: {{{lyricist}}}
+Arranger: {{{arranger}}}
+
+Analyze this information and provide a concise summary.
+`,
+});
+
+
+// --------------------
+// Flow definition
+// --------------------
+export const copyrightInformationLookupFlow = ai.defineFlow(
   {
     name: 'copyrightInformationLookupFlow',
     inputSchema: CopyrightInformationLookupInputSchema,
     outputSchema: CopyrightInformationLookupOutputSchema,
   },
   async (input) => {
-    const llmResponse = await generate({
-      prompt: copyrightLookupPrompt,
-      model: googleAI.model('gemini-pro'),
-      input: input,
-      output: {
-        schema: CopyrightInformationLookupOutputSchema,
-      },
-    });
-
-    return llmResponse.output()!;
+    const llmResponse = await copyrightLookupPrompt(input);
+    return llmResponse.output!;
   }
 );
 
-
+// --------------------
+// Function wrapper
+// --------------------
 export async function copyrightInformationLookup(
   input: CopyrightInformationLookupInput
 ): Promise<CopyrightInformationLookupOutput> {

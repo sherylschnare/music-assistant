@@ -8,10 +8,8 @@
  * - CopyrightInformationLookupInput - The input type for the copyrightInformationLookup function.
  * - CopyrightInformationLookupOutput - The return type for the copyrightInformationLookup function.
  */
-
-import {ai} from '@/ai/genkit';
 import {z} from 'zod';
-
+import {ai} from '../genkit';
 
 const CopyrightInformationLookupInputSchema = z.object({
   title: z.string().describe('The title of the song.'),
@@ -36,22 +34,19 @@ export async function copyrightInformationLookup(
   return copyrightInformationLookupFlow(input);
 }
 
-
-const copyrightInformationLookupPrompt = ai.definePrompt({
+const copyrightInformationLookupPrompt = ai.definePrompt(
+  {
     name: 'copyrightInformationLookupPrompt',
-    input: {
-      schema: CopyrightInformationLookupInputSchema,
-    },
-    output: {
-      schema: CopyrightInformationLookupOutputSchema,
-    },
+    input: {schema: CopyrightInformationLookupInputSchema},
+    output: {schema: CopyrightInformationLookupOutputSchema},
     prompt: `You are an expert in music copyright law. Please provide a summary of the copyright information for the following song, including the copyright holder, any relevant licensing information, and any other important details related to the copyright of the song.
 
-Song Title: {{{title}}}
-Composer: {{{composer}}}
-Lyricist: {{{lyricist}}}
-Arranger: {{{arranger}}}`,
-});
+Song Title: {{title}}
+Composer: {{composer}}
+Lyricist: {{lyricist}}
+Arranger: {{arranger}}`,
+  },
+);
 
 export const copyrightInformationLookupFlow = ai.defineFlow(
   {
@@ -60,7 +55,7 @@ export const copyrightInformationLookupFlow = ai.defineFlow(
     outputSchema: CopyrightInformationLookupOutputSchema,
   },
   async (input) => {
-    const { output } = await copyrightInformationLookupPrompt(input);
-    return output!;
+    const llmResponse = await copyrightInformationLookupPrompt(input);
+    return llmResponse;
   }
 );

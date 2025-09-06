@@ -1,14 +1,12 @@
 
-import {genkit, ai} from '@genkit-ai/core';
+import {genkit} from 'genkit';
 import {googleAI} from '@genkit-ai/googleai';
-import {firebasePlugin} from '@genkit-ai/firebase';
+import {firebase} from '@genkit-ai/firebase';
 
-genkit({
+export const ai = genkit({
   plugins: [
     googleAI(),
-    firebasePlugin(),
+    firebase(),
   ],
   enableTracingAndMetrics: true,
 });
-
-export {ai};

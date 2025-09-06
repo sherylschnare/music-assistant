@@ -147,7 +147,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     }
 
     setup();
-  }, [loading]);
+  }, [loading, users.length]);
 
   const setUsers = async (newUsers: User[]) => {
     try {

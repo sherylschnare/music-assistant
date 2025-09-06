@@ -1,5 +1,4 @@
-import { createApiHandler } from '@genkit-ai/next/server';
+import { createApiHandler } from '@genkit-ai/next';
 import '@/ai/flows/copyright-information-lookup';
-import { myFlow } from '@/ai/flows/my-flow';
 
 export const POST = createApiHandler();

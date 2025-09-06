@@ -56,60 +56,6 @@ const UserContext = createContext<UserContextType | undefined>(undefined);
 const baseSubtypes = ["Christmas", "Easter", "Spring", "Winter", "Fall", "Summer", "Celtic", "Pop"];
 const baseTypes = ["Choral", "Orchestral", "Band", "Solo", "Chamber", "Holiday"];
 
-async function seedInitialData() {
-    console.log("Seeding initial data if necessary...");
-    const batch = writeBatch(db);
-
-    // Seed Taxonomy
-    const taxonomyDocRef = doc(db, 'app-data', 'taxonomy');
-    const taxonomySnap = await getDoc(taxonomyDocRef);
-    if (!taxonomySnap.exists()) {
-        try {
-            batch.set(taxonomyDocRef, { types: baseTypes, subtypes: baseSubtypes });
-            console.log("Seeding taxonomy...");
-        } catch (error) {
-            console.error("Failed to seed taxonomy data", error);
-        }
-    }
-
-    // Seed Users
-    const usersCollectionRef = collection(db, 'users');
-    const usersSnapshot = await getDocs(usersCollectionRef);
-    if (usersSnapshot.empty) {
-        defaultUsers.forEach(user => {
-            const docRef = doc(db, 'users', user.id);
-            batch.set(docRef, user);
-        });
-        console.log("Seeding users...");
-    }
-
-    // Seed Songs
-    const songsCollectionRef = collection(db, 'songs');
-    const songsSnapshot = await getDocs(songsCollectionRef);
-    if (songsSnapshot.empty) {
-        defaultSongs.forEach(song => {
-            const docRef = doc(db, 'songs', song.id);
-            batch.set(docRef, song);
-        });
-        console.log("Seeding songs...");
-    }
-    
-    // Seed Concerts
-    const concertsCollectionRef = collection(db, 'concerts');
-    const concertsSnapshot = await getDocs(concertsCollectionRef);
-    if (concertsSnapshot.empty) {
-        defaultConcerts.forEach(concert => {
-            const docRef = doc(db, 'concerts', concert.id);
-            batch.set(docRef, concert);
-        });
-        console.log("Seeding concerts...");
-    }
-
-    await batch.commit();
-    console.log("Initial data seeding complete.");
-}
-
-
 export const UserProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUserState] = useState<User | null>(null); // Start with null user
   const [users, setUsersState] = useState<User[]>([]);
@@ -120,25 +66,32 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   const [musicSubtypes, setMusicSubtypesState] = useState<string[]>([]);
 
   useEffect(() => {
-    seedInitialData();
-
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser: FirebaseUser | null) => {
       if (firebaseUser) {
         // User is signed in.
         const userDocRef = doc(db, 'users', firebaseUser.uid);
-        const userDocSnap = await getDoc(userDocRef);
-        if (userDocSnap.exists()) {
-          console.log("Fetching user data from Firestore...");
-          setUserState({ id: userDocSnap.id, ...userDocSnap.data() } as User);
-        } else {
-          console.log("User exists in Auth, but not in Firestore DB. This may happen during signup.");
-           setUserState(null);
-        }
+        
+        // Use onSnapshot to listen for real-time updates to the user document
+        const unsubUser = onSnapshot(userDocRef, (docSnap) => {
+          if (docSnap.exists()) {
+            setUserState({ id: docSnap.id, ...docSnap.data() } as User);
+          } else {
+            // This case can happen if the user's record in Firestore is deleted
+            // but they are still authenticated.
+            console.log("User exists in Auth, but not in Firestore DB.");
+            setUserState(null);
+          }
+          setLoading(false);
+        });
+        
+        // Return the unsubscribe function for the user document listener
+        return () => unsubUser();
+
       } else {
         // User is signed out.
         setUserState(null);
+        setLoading(false);
       }
-      setLoading(false);
     });
 
     return () => unsubscribe();
@@ -146,6 +99,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   
   
   useEffect(() => {
+    // These listeners will fetch data for the application regardless of auth state
     const usersUnsubscribe = onSnapshot(collection(db, "users"), (snapshot) => {
         const usersData = snapshot.docs.map(doc => doc.data() as User);
         setUsersState(usersData);

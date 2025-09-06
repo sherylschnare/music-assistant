@@ -17,6 +17,7 @@ import { useUser } from "@/context/user-context";
 import { getAuth, signOut } from "firebase/auth";
 import { useToast } from "@/hooks/use-toast";
 import React from "react";
+import { Skeleton } from "@/components/ui/skeleton";
 
 function StatCard({ title, value, icon: Icon, description }: { title: string, value: string, icon: React.ElementType, description: string }) {
   return (
@@ -40,7 +41,7 @@ export default function DashboardPage() {
 
   React.useEffect(() => {
     if (!loading && !user) {
-      router.push('/'); // Redirect to login if not authenticated
+      router.push('/'); // Redirect to login if not authenticated and loading is finished
     }
   }, [user, loading, router]);
 
@@ -65,8 +66,48 @@ export default function DashboardPage() {
 
   if (loading || !user) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <p>Loading...</p>
+      <div>
+        <PageHeader 
+          title="Welcome!"
+          description="Loading your orchestra's activity..."
+        >
+          <div className="flex items-center gap-4">
+             <Skeleton className="h-10 w-36" />
+             <Skeleton className="h-10 w-28" />
+          </div>
+        </PageHeader>
+         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 mb-8">
+            <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Total Pieces</CardTitle>
+                     <Skeleton className="h-4 w-4" />
+                </CardHeader>
+                <CardContent>
+                    <Skeleton className="h-8 w-12" />
+                    <Skeleton className="h-3 w-40 mt-1" />
+                </CardContent>
+            </Card>
+            <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Concerts Planned</CardTitle>
+                     <Skeleton className="h-4 w-4" />
+                </CardHeader>
+                <CardContent>
+                    <Skeleton className="h-8 w-12" />
+                    <Skeleton className="h-3 w-32 mt-1" />
+                </CardContent>
+            </Card>
+             <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Upcoming Concert</CardTitle>
+                     <Skeleton className="h-4 w-4" />
+                </CardHeader>
+                <CardContent>
+                    <Skeleton className="h-8 w-24" />
+                    <Skeleton className="h-3 w-36 mt-1" />
+                </CardContent>
+            </Card>
+        </div>
       </div>
     );
   }
@@ -137,4 +178,27 @@ export default function DashboardPage() {
         )}
         <Card>
           <CardHeader>
-            <CardTitle>Recently Performed</C
+            <CardTitle>Recently Performed</CardTitle>
+            <CardDescription>A look at pieces performed in recent concerts.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {recentlyPerformed.length > 0 ? (
+                <ul className="space-y-3">
+                    {recentlyPerformed.map(song => (
+                        <li key={song.id} className="flex justify-between items-center text-sm">
+                            <div>
+                                <span className="font-medium">{song.title}</span> by {song.composer}
+                            </div>
+                            <span className="text-muted-foreground">{new Date(song.lastPerformed!).toLocaleDateString()}</span>
+                        </li>
+                    ))}
+                </ul>
+            ) : (
+                <p className="text-sm text-muted-foreground">No recent performance data available.</p>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  )
+}

@@ -37,7 +37,7 @@ export default function LoginPage() {
       await signInWithEmailAndPassword(auth, email, password)
       toast({
         title: "Login Successful",
-        description: "You have been successfully logged in.",
+        description: "Welcome back!",
       })
       router.push("/dashboard")
     } catch (error: any) {
@@ -51,10 +51,13 @@ export default function LoginPage() {
           errorMessage = 'This account has been disabled.';
           break;
         case 'auth/user-not-found':
-          errorMessage = 'No account found with this email.';
+          errorMessage = 'No account found with this email address.';
           break;
         case 'auth/wrong-password':
           errorMessage = 'Incorrect password. Please try again.';
+          break;
+        case 'auth/invalid-credential':
+          errorMessage = 'Invalid credentials. Please check your email and password.';
           break;
         default:
           errorMessage = 'Failed to log in. Please check your credentials.';

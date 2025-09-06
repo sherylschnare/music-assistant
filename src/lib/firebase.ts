@@ -23,4 +23,6 @@ if (!getApps().length) {
 const auth = getAuth(app);
 const db = getFirestore(app);
 
+console.log("Firebase initialized and Firestore database connected.", db);
+
 export { app, auth, db };

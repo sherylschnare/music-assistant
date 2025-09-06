@@ -128,6 +128,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         const userDocRef = doc(db, 'users', firebaseUser.uid);
         const userDocSnap = await getDoc(userDocRef);
         if (userDocSnap.exists()) {
+          console.log("Fetching user data from Firestore...");
           setUserState({ id: userDocSnap.id, ...userDocSnap.data() } as User);
         } else {
           console.log("User exists in Auth, but not in Firestore DB. This may happen during signup.");

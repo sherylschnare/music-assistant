@@ -52,10 +52,9 @@ type SongFormValues = z.infer<typeof formSchema>
 
 interface SongFormDialogProps {
   onSave: (song: Omit<Song, 'id' | 'performanceHistory' | 'lastPerformed'>) => void
-  trigger: React.ReactNode
 }
 
-export function SongFormDialog({ onSave, trigger }: SongFormDialogProps) {
+export function SongFormDialog({ onSave }: SongFormDialogProps) {
   const [isOpen, setIsOpen] = React.useState(false)
   const { toast } = useToast()
   const { musicTypes, musicSubtypes } = useUser()

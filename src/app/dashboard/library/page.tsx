@@ -10,14 +10,7 @@ import type { Song } from "@/lib/types"
 
 export default function LibraryPage() {
   const { songs, addSongs } = useUser();
-  const [isDialogOpen, setIsDialogOpen] = React.useState(false)
-  const [editingSong, setEditingSong] = React.useState<Song | undefined>(undefined)
-
-  const handleAddSong = () => {
-    setEditingSong(undefined)
-    setIsDialogOpen(true)
-  }
-
+  
   const handleSaveSong = async (songToSave: Omit<Song, 'id' | 'performanceHistory' | 'lastPerformed'>) => {
     const newSong: Song = {
         ...songToSave,
@@ -32,7 +25,6 @@ export default function LibraryPage() {
       <PageHeader title="Music Library" description={`Manage your collection of ${songs.length} pieces.`}>
         <SongFormDialog 
           onSave={handleSaveSong}
-          trigger={<div />} 
         />
       </PageHeader>
       <MusicLibraryClient data={songs} />

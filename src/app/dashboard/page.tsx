@@ -3,7 +3,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Plus, Library, Music, LogOut } from "lucide-react";
+import { Plus, Library, Music } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -14,7 +14,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/page-header";
 import { useUser } from "@/context/user-context";
-import { useToast } from "@/hooks/use-toast";
 import React from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -34,9 +33,8 @@ function StatCard({ title, value, icon: Icon, description }: { title: string, va
 }
 
 export default function DashboardPage() {
-  const { user, songs, concerts, loading, setUser } = useUser();
+  const { user, songs, concerts, loading } = useUser();
   const router = useRouter();
-  const { toast } = useToast();
 
   React.useEffect(() => {
     if (!loading && !user) {
@@ -44,14 +42,6 @@ export default function DashboardPage() {
     }
   }, [user, loading, router]);
 
-  const handleLogout = async () => {
-    setUser(null);
-    toast({
-        title: "Logged Out",
-        description: "You have been successfully logged out."
-    })
-    router.push('/');
-  }
 
   if (loading || !user) {
     return (
@@ -62,7 +52,6 @@ export default function DashboardPage() {
         >
           <div className="flex items-center gap-4">
              <Skeleton className="h-10 w-36" />
-             <Skeleton className="h-10 w-28" />
           </div>
         </PageHeader>
          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 mb-8">
@@ -115,16 +104,11 @@ export default function DashboardPage() {
         title={`Welcome, ${user.name}!`}
         description="Here's a snapshot of your orchestra's activity."
       >
-        <div className="flex items-center gap-4">
-           <Button asChild>
-            <Link href="/dashboard/library/song-form-dialog">
-              <Plus className="mr-2 h-4 w-4" /> Add New Music
-            </Link>
-          </Button>
-          <Button variant="outline" onClick={handleLogout}>
-            <LogOut className="mr-2 h-4 w-4" /> Logout
-          </Button>
-        </div>
+        <Button asChild>
+          <Link href="/dashboard/library/song-form-dialog">
+            <Plus className="mr-2 h-4 w-4" /> Add New Music
+          </Link>
+        </Button>
       </PageHeader>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 mb-8">

@@ -6,7 +6,7 @@ import { getAuth, onAuthStateChanged, User as FirebaseUser } from 'firebase/auth
 import { collection, getDocs, doc, setDoc, onSnapshot, writeBatch, getDoc, updateDoc, query } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import type { Song, User, Concert } from '@/lib/types';
-import { users as defaultUsers, songs as defaultSongs, concerts as defaultConcerts } from '@/lib/data';
+import { songs as defaultSongs, concerts as defaultConcerts } from '@/lib/data';
 
 interface UserContextType {
   user: User | null;
@@ -30,7 +30,7 @@ const UserContext = createContext<UserContextType | undefined>(undefined);
 const baseSubtypes = ["Christmas", "Easter", "Spring", "Winter", "Fall", "Summer", "Celtic", "Pop"];
 const baseTypes = ["Choral", "Orchestral", "Band", "Solo", "Chamber", "Holiday"];
 
-async function seedInitialData(userId: string) {
+async function seedInitialData() {
     console.log("Seeding initial data if necessary...");
     const batch = writeBatch(db);
 
@@ -40,15 +40,7 @@ async function seedInitialData(userId: string) {
         batch.set(taxonomyDocRef, { types: baseTypes, subtypes: baseSubtypes });
     }
 
-    const usersCollectionRef = collection(db, 'users');
-    const usersSnapshot = await getDocs(usersCollectionRef);
-    if (usersSnapshot.empty) {
-        defaultUsers.forEach(user => {
-            const docRef = doc(db, 'users', user.id === '1' ? userId : user.id);
-            batch.set(docRef, { ...user, id: user.id === '1' ? userId : user.id });
-        });
-    }
-
+    // Only seed songs and concerts if they are empty
     const songsCollectionRef = collection(db, 'songs');
     const songsSnapshot = await getDocs(songsCollectionRef);
     if (songsSnapshot.empty) {
@@ -73,7 +65,6 @@ async function seedInitialData(userId: string) {
 
 export const UserProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUserState] = useState<User | null>(null);
-  const [firebaseUser, setFirebaseUser] = useState<FirebaseUser | null>(null);
   const [users, setUsersState] = useState<User[]>([]);
   const [songs, setSongsState] = useState<Song[]>([]);
   const [concerts, setConcertsState] = useState<Concert[]>([]);
@@ -85,10 +76,9 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     const auth = getAuth();
     const unsubscribe = onAuthStateChanged(auth, async (fbUser) => {
-      setFirebaseUser(fbUser);
       if (fbUser) {
         if (!initialDataSeeded) {
-            await seedInitialData(fbUser.uid);
+            await seedInitialData();
             setInitialDataSeeded(true);
         }
 

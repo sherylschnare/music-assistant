@@ -2,31 +2,31 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { getAuth, onAuthStateChanged, User as FirebaseUser } from 'firebase/auth';
-import { collection, getDocs, doc, setDoc, onSnapshot, writeBatch, getDoc, updateDoc, query } from 'firebase/firestore';
+import { collection, getDocs, doc, setDoc, onSnapshot, writeBatch, getDoc, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import type { Song, User, Concert } from '@/lib/types';
-import { songs as defaultSongs, concerts as defaultConcerts } from '@/lib/data';
+import { users as defaultUsers, songs as defaultSongs, concerts as defaultConcerts } from '@/lib/data';
 
 interface UserContextType {
-  user: User | null;
-  setUser: (user: User | null) => void;
+  user: User;
+  setUser: (user: Partial<User>) => void;
   users: User[];
-  setUsers: (users: User[]) => Promise<void>;
+  setUsers: (users: User[]) => void;
   songs: Song[];
-  setSongs: (songs: Song[]) => Promise<void>;
+  setSongs: (songs: Song[]) => void;
   addSongs: (songs: Song[]) => Promise<void>;
   concerts: Concert[];
-  setConcerts: (concerts: Concert[]) => Promise<void>;
+  setConcerts: (concerts: Concert[]) => void;
   loading: boolean;
   musicTypes: string[];
-  setMusicTypes: (types: string[]) => Promise<void>;
+  setMusicTypes: (types: string[]) => void;
   musicSubtypes: string[];
-  setMusicSubtypes: (subtypes: string[]) => Promise<void>;
+  setMusicSubtypes: (subtypes: string[]) => void;
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
 
+const defaultUser: User = defaultUsers[0];
 const baseSubtypes = ["Christmas", "Easter", "Spring", "Winter", "Fall", "Summer", "Celtic", "Pop"];
 const baseTypes = ["Choral", "Orchestral", "Band", "Solo", "Chamber", "Holiday"];
 
@@ -34,13 +34,30 @@ async function seedInitialData() {
     console.log("Seeding initial data if necessary...");
     const batch = writeBatch(db);
 
+    // Seed Taxonomy
     const taxonomyDocRef = doc(db, 'app-data', 'taxonomy');
     const taxonomySnap = await getDoc(taxonomyDocRef);
     if (!taxonomySnap.exists()) {
-        batch.set(taxonomyDocRef, { types: baseTypes, subtypes: baseSubtypes });
+        try {
+            batch.set(taxonomyDocRef, { types: baseTypes, subtypes: baseSubtypes });
+            console.log("Seeding taxonomy...");
+        } catch (error) {
+            console.error("Failed to seed taxonomy data", error);
+        }
     }
 
-    // Only seed songs and concerts if they are empty
+    // Seed Users
+    const usersCollectionRef = collection(db, 'users');
+    const usersSnapshot = await getDocs(usersCollectionRef);
+    if (usersSnapshot.empty) {
+        defaultUsers.forEach(user => {
+            const docRef = doc(db, 'users', user.id);
+            batch.set(docRef, user);
+        });
+        console.log("Seeding users...");
+    }
+
+    // Seed Songs
     const songsCollectionRef = collection(db, 'songs');
     const songsSnapshot = await getDocs(songsCollectionRef);
     if (songsSnapshot.empty) {
@@ -48,8 +65,10 @@ async function seedInitialData() {
             const docRef = doc(db, 'songs', song.id);
             batch.set(docRef, song);
         });
+        console.log("Seeding songs...");
     }
     
+    // Seed Concerts
     const concertsCollectionRef = collection(db, 'concerts');
     const concertsSnapshot = await getDocs(concertsCollectionRef);
     if (concertsSnapshot.empty) {
@@ -57,145 +76,178 @@ async function seedInitialData() {
             const docRef = doc(db, 'concerts', concert.id);
             batch.set(docRef, concert);
         });
+        console.log("Seeding concerts...");
     }
 
     await batch.commit();
+    console.log("Initial data seeding complete.");
 }
 
 
 export const UserProvider = ({ children }: { children: ReactNode }) => {
-  const [user, setUserState] = useState<User | null>(null);
+  const [user, setUserState] = useState<User>(defaultUser);
   const [users, setUsersState] = useState<User[]>([]);
   const [songs, setSongsState] = useState<Song[]>([]);
   const [concerts, setConcertsState] = useState<Concert[]>([]);
   const [loading, setLoading] = useState(true);
   const [musicTypes, setMusicTypesState] = useState<string[]>([]);
   const [musicSubtypes, setMusicSubtypesState] = useState<string[]>([]);
-  const [initialDataSeeded, setInitialDataSeeded] = useState(false);
 
   useEffect(() => {
-    const auth = getAuth();
-    const unsubscribe = onAuthStateChanged(auth, async (fbUser) => {
-      if (fbUser) {
-        if (!initialDataSeeded) {
-            await seedInitialData();
-            setInitialDataSeeded(true);
-        }
+    async function setup() {
+        await seedInitialData();
 
-        const userDocRef = doc(db, 'users', fbUser.uid);
-        const userUnsubscribe = onSnapshot(userDocRef, (doc) => {
-            if (doc.exists()) {
-                const userData = doc.data() as User;
-                setUserState(userData);
-                localStorage.setItem('userProfile', JSON.stringify(userData));
-            } else {
-                setUserState(null);
-                localStorage.removeItem('userProfile');
-            }
-            setLoading(false);
+        const usersUnsubscribe = onSnapshot(collection(db, "users"), (snapshot) => {
+            const usersData = snapshot.docs.map(doc => doc.data() as User);
+            setUsersState(usersData);
+            if(loading) setLoading(false);
         });
-        return () => userUnsubscribe();
-      } else {
-        setUserState(null);
-        localStorage.removeItem('userProfile');
-        setLoading(false);
-      }
-    });
 
-    return () => unsubscribe();
-  }, [initialDataSeeded]);
+        const songsUnsubscribe = onSnapshot(collection(db, "songs"), (snapshot) => {
+            const songsData = snapshot.docs.map(doc => doc.data() as Song);
+            setSongsState(songsData);
+        });
 
-  useEffect(() => {
-    const usersUnsubscribe = onSnapshot(collection(db, "users"), (snapshot) => {
-        const usersData = snapshot.docs.map(doc => doc.data() as User);
-        setUsersState(usersData);
-    });
+        const taxonomyUnsubscribe = onSnapshot(doc(db, "app-data", "taxonomy"), (snapshot) => {
+            if (snapshot.exists()) {
+                const data = snapshot.data();
+                setMusicTypesState(data.types || []);
+                setMusicSubtypesState(data.subtypes || []);
+            } else {
+                setMusicTypesState(baseTypes);
+                setMusicSubtypesState(baseSubtypes);
+            }
+        });
 
-    const songsUnsubscribe = onSnapshot(query(collection(db, "songs")), (snapshot) => {
-        const songsData = snapshot.docs.map(doc => doc.data() as Song);
-        setSongsState(songsData);
-    });
+        const concertsUnsubscribe = onSnapshot(collection(db, "concerts"), (snapshot) => {
+            const concertsData = snapshot.docs.map(doc => doc.data() as Concert);
+            setConcertsState(concertsData);
+        });
 
-    const taxonomyUnsubscribe = onSnapshot(doc(db, "app-data", "taxonomy"), (snapshot) => {
-        if (snapshot.exists()) {
-            const data = snapshot.data();
-            setMusicTypesState(data.types || baseTypes);
-            setMusicSubtypesState(data.subtypes || baseSubtypes);
-        } else {
-            setMusicTypesState(baseTypes);
-            setMusicSubtypesState(baseSubtypes);
+        try {
+          const storedUser = localStorage.getItem('userProfile');
+          if (storedUser) {
+            setUserState(JSON.parse(storedUser));
+          } else if (users.length > 0) {
+            setUserState(users[0]);
+          }
+        } catch(e) {
+          console.error("Failed to load user from localstorage", e)
+          if (users.length > 0) {
+            setUserState(users[0]);
+          }
         }
-    });
 
-    const concertsUnsubscribe = onSnapshot(query(collection(db, "concerts")), (snapshot) => {
-        const concertsData = snapshot.docs.map(doc => doc.data() as Concert);
-        setConcertsState(concertsData);
-    });
+        return () => {
+            usersUnsubscribe();
+            songsUnsubscribe();
+            concertsUnsubscribe();
+            taxonomyUnsubscribe();
+        };
+    }
 
-    return () => {
-        usersUnsubscribe();
-        songsUnsubscribe();
-        concertsUnsubscribe();
-        taxonomyUnsubscribe();
-    };
-  }, []);
+    setup();
+  }, [loading, users.length]);
 
   const setUsers = async (newUsers: User[]) => {
-    const batch = writeBatch(db);
-    newUsers.forEach(u => {
-      const docRef = doc(db, 'users', u.id);
-      batch.set(docRef, u);
-    });
-    await batch.commit();
+    try {
+      const batch = writeBatch(db);
+      newUsers.forEach(u => {
+        const docRef = doc(db, 'users', u.id);
+        batch.set(docRef, u);
+      });
+      await batch.commit();
+    } catch (error) {
+      console.error("Failed to save users to Firestore", error);
+    }
   }
 
   const setSongs = async (newSongs: Song[]) => {
-    const batch = writeBatch(db);
-    newSongs.forEach(s => {
-        const docRef = doc(db, 'songs', s.id);
-        batch.set(docRef, s, { merge: true });
-    });
-    await batch.commit();
+    try {
+        const batch = writeBatch(db);
+        newSongs.forEach(s => {
+            const docRef = doc(db, 'songs', s.id);
+            batch.set(docRef, s, { merge: true });
+        });
+        await batch.commit();
+    } catch (error) {
+      console.error("Failed to save songs to Firestore", error);
+    }
   };
 
   const addSongs = async (newSongs: Song[]) => {
-    const batch = writeBatch(db);
-    newSongs.forEach(s => {
-      const docRef = doc(db, 'songs', s.id);
-      batch.set(docRef, s);
-    });
-    await batch.commit();
+    try {
+      const batch = writeBatch(db);
+      newSongs.forEach(s => {
+        const docRef = doc(db, 'songs', s.id);
+        batch.set(docRef, s);
+      });
+      await batch.commit();
+    } catch (error) {
+      console.error("Failed to add songs to Firestore", error);
+    }
   };
 
   const setConcerts = async (newConcerts: Concert[]) => {
-     const batch = writeBatch(db);
-     newConcerts.forEach(c => {
-       const docRef = doc(db, 'concerts', c.id);
-       batch.set(docRef, c, { merge: true });
-     });
-     await batch.commit();
+     try {
+      const concertsCollectionRef = collection(db, "concerts");
+      const existingDocs = await getDocs(concertsCollectionRef);
+      
+      const batch = writeBatch(db);
+      
+      // Get IDs of new concerts
+      const newConcertIds = new Set(newConcerts.map(c => c.id));
+      
+      // Delete concerts that are not in the new list
+      existingDocs.forEach(doc => {
+        if (!newConcertIds.has(doc.id)) {
+            batch.delete(doc.ref);
+        }
+      });
+      
+      // Set/update new concerts
+      newConcerts.forEach(c => {
+        const docRef = doc(db, 'concerts', c.id);
+        batch.set(docRef, c, { merge: true });
+      });
+      
+      await batch.commit();
+
+    } catch (error) {
+      console.error("Failed to save concerts to Firestore", error);
+    }
   }
 
-  const updateUser = async (updatedUser: User | null) => {
-    setUserState(updatedUser);
-    if(updatedUser) {
-        localStorage.setItem('userProfile', JSON.stringify(updatedUser));
-        const userRef = doc(db, 'users', updatedUser.id);
-        await setDoc(userRef, updatedUser, { merge: true });
-    } else {
-        localStorage.removeItem('userProfile');
-        await getAuth().signOut();
+  const updateUser = async (updatedFields: Partial<User>) => {
+    const updatedUser = { ...user, ...updatedFields };
+    try {
+      localStorage.setItem('userProfile', JSON.stringify(updatedUser));
+      setUserState(updatedUser);
+      
+      const userRef = doc(db, 'users', updatedUser.id);
+      await setDoc(userRef, updatedUser, { merge: true });
+
+    } catch (error) {
+      console.error("Failed to save user to localStorage/Firestore", error);
     }
   }
 
   const setMusicTypes = async (types: string[]) => {
-    const taxonomyDocRef = doc(db, 'app-data', 'taxonomy');
-    await updateDoc(taxonomyDocRef, { types });
+    try {
+      const taxonomyDocRef = doc(db, 'app-data', 'taxonomy');
+      await updateDoc(taxonomyDocRef, { types });
+    } catch (e) {
+      console.error("Failed to update music types", e);
+    }
   }
 
   const setMusicSubtypes = async (subtypes: string[]) => {
-    const taxonomyDocRef = doc(db, 'app-data', 'taxonomy');
-    await updateDoc(taxonomyDocRef, { subtypes });
+    try {
+      const taxonomyDocRef = doc(db, 'app-data', 'taxonomy');
+      await updateDoc(taxonomyDocRef, { subtypes });
+    } catch (e) {
+      console.error("Failed to update music subtypes", e);
+    }
   }
 
   const value = { 
@@ -210,7 +262,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
 
   return (
     <UserContext.Provider value={value}>
-      {children}
+      {!loading && children}
     </UserContext.Provider>
   );
 };

@@ -4,7 +4,15 @@ import type { Song, Concert, User } from './types';
 // This data is now only used for seeding an empty database.
 // The user ID '1' for Sheryl Schnare is a placeholder and will not correspond
 // to an actual Firebase Auth UID. A real user account must be created via signup.
-export const users: User[] = [];
+export const users: User[] = [
+    {
+        id: "1",
+        name: "Sheryl Schnare",
+        role: "Music Director",
+        email: "sherylschnare@birdsongstudio.ca",
+        password: "Can1000dians@1"
+    }
+];
 
 export const songs: Song[] = [
     {
@@ -70,4 +78,3 @@ export const concerts: Concert[] = [
         isLocked: true,
     }
 ];
-

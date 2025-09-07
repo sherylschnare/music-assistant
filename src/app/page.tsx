@@ -18,10 +18,7 @@ import { Input } from "@/components/ui/input"
 import { useToast } from "@/hooks/use-toast"
 import { useUser } from "@/context/user-context"
 import { Skeleton } from "@/components/ui/skeleton"
-import { getAuth, signInWithEmailAndPassword } from "firebase/auth"
-import { doc, getDoc } from "firebase/firestore"
-import { db } from "@/lib/firebase"
-import type { User } from "@/lib/types"
+import { users } from "@/lib/data"
 
 export default function LoginPage() {
   const router = useRouter()
@@ -35,7 +32,10 @@ export default function LoginPage() {
 
   useEffect(() => {
     if (!userLoading) {
-      if (user) {
+      // If a user is already set in context, redirect to dashboard
+      // This handles cases where user refreshes the page while logged in
+      const storedUser = localStorage.getItem('userProfile');
+      if (storedUser) {
         router.push('/dashboard');
       } else {
         setPageLoading(false);
@@ -48,38 +48,26 @@ export default function LoginPage() {
     setLoading(true)
     setError(null)
     
-    const auth = getAuth();
-    try {
-      const userCredential = await signInWithEmailAndPassword(auth, email, password);
-      const firebaseUser = userCredential.user;
+    // Demo login logic
+    const demoUser = users.find(u => u.email === email && u.password === password);
 
-      // Fetch user profile from Firestore
-      const userDocRef = doc(db, "users", firebaseUser.uid);
-      const userDocSnap = await getDoc(userDocRef);
-
-      if (userDocSnap.exists()) {
-        const userProfile = userDocSnap.data() as User;
-        setUser(userProfile);
-        toast({
-          title: "Login Successful",
-          description: `Welcome back, ${userProfile.name}!`,
-        });
-        router.push("/dashboard");
-      } else {
-        // This case might happen if a user is authenticated but has no profile document
-        setError("User profile not found. Please contact an administrator.");
-        auth.signOut();
-      }
-    } catch (error: any) {
-      setError("Invalid email or password. Please try again.");
+    if (demoUser) {
+      setUser(demoUser);
       toast({
+        title: "Login Successful",
+        description: `Welcome back, ${demoUser.name}!`,
+      });
+      router.push("/dashboard");
+    } else {
+       setError("Invalid email or password. Please try again.");
+       toast({
         variant: "destructive",
         title: "Login Failed",
         description: "Invalid email or password. Please try again.",
       });
-    } finally {
-      setLoading(false)
     }
+
+    setLoading(false)
   }
 
   if (pageLoading) {

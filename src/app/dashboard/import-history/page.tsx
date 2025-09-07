@@ -51,16 +51,10 @@ export default function ImportHistoryPage() {
   const router = useRouter();
 
   React.useEffect(() => {
-    if (user.role !== 'Music Director') {
+    if (user && user.role !== 'Music Director') {
       router.push('/dashboard')
     }
   }, [user, router])
-
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    if (event.target.files) {
-      setFile(event.target.files[0]);
-    }
-  };
 
   const handleImport = async () => {
     if (!file) {
@@ -162,8 +156,12 @@ export default function ImportHistoryPage() {
     });
   };
   
-  if (user.role !== 'Music Director') {
-    return null;
+  if (!user || user.role !== 'Music Director') {
+    return (
+        <div className="flex items-center justify-center h-full">
+            <p>You are not authorized to view this page.</p>
+        </div>
+    )
   }
 
   return (

@@ -1,5 +1,4 @@
 
-
 "use client"
 
 import Link from "next/link";
@@ -52,26 +51,37 @@ const navItems = [
   { href: "/dashboard/concerts", icon: Music, label: "Concerts" },
   { href: "/dashboard/reports", icon: BookCopy, label: "Reports" },
   { href: "/dashboard/copyright", icon: FileText, label: "Copyright Checker" },
-  { href: "/dashboard/admin", icon: Shield, label: "Admin", requiredRole: "Music Director" },
-  { href: "/dashboard/admin/taxonomy", icon: Tag, label: "Taxonomy", requiredRole: "Music Director" },
-  { href: "/dashboard/import", icon: Upload, label: "Import Library", requiredRole: "Music Director" },
-  { href: "/dashboard/import-history", icon: History, label: "Import History", requiredRole: "Music Director" },
 ];
+
+const adminNavItems = [
+  { href: "/dashboard/admin", icon: Shield, label: "Admin" },
+  { href: "/dashboard/admin/taxonomy", icon: Tag, label: "Taxonomy" },
+  { href: "/dashboard/import", icon: Upload, label: "Import Library" },
+  { href: "/dashboard/import-history", icon: History, label: "Import History" },
+]
 
 function MainNav() {
   const pathname = usePathname();
   const { user } = useUser();
 
-  const visibleNavItems = navItems.filter(item => {
-    if (!item.requiredRole) return true;
-    if (!user) return false;
-    return item.requiredRole === user.role;
-  });
-
   return (
     <SidebarMenu>
-      {visibleNavItems.map((item) => (
+      {navItems.map((item) => (
         <SidebarMenuItem key={item.href}>
+          <Link href={item.href}>
+            <SidebarMenuButton
+              isActive={pathname === item.href}
+              tooltip={item.label}
+              className="justify-start"
+            >
+              <item.icon className="h-5 w-5" />
+              <span className="text-base">{item.label}</span>
+            </SidebarMenuButton>
+          </Link>
+        </SidebarMenuItem>
+      ))}
+      {user && user.role === 'Music Director' && adminNavItems.map((item) => (
+         <SidebarMenuItem key={item.href}>
           <Link href={item.href}>
             <SidebarMenuButton
               isActive={pathname === item.href}
@@ -90,10 +100,11 @@ function MainNav() {
 
 function UserProfile() {
   const router = useRouter();
-  const { user } = useUser();
+  const { user, setUser } = useUser();
 
   const handleLogout = () => {
     localStorage.removeItem('userProfile');
+    setUser(null);
     router.push("/");
   };
   

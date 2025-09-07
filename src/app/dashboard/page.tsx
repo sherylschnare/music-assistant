@@ -37,7 +37,8 @@ export default function DashboardPage() {
   const router = useRouter();
 
   React.useEffect(() => {
-    if (!loading && !user) {
+    const storedUser = localStorage.getItem('userProfile');
+    if (!loading && !user && !storedUser) {
       router.push('/'); // Redirect to login if not authenticated and loading is finished
     }
   }, [user, loading, router]);

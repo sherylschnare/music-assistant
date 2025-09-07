@@ -18,59 +18,69 @@ import { Input } from "@/components/ui/input"
 import { useToast } from "@/hooks/use-toast"
 import { useUser } from "@/context/user-context"
 import { Skeleton } from "@/components/ui/skeleton"
-import { users } from "@/lib/data"
+import { getAuth, signInWithEmailAndPassword } from "firebase/auth"
+import { doc, getDoc } from "firebase/firestore"
+import { db } from "@/lib/firebase"
+import type { User } from "@/lib/types"
 
 export default function LoginPage() {
   const router = useRouter()
   const { toast } = useToast()
-  const { user, setUser, loading: userLoading, users: allUsers } = useUser()
+  const { user, setUser } = useUser()
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [pageLoading, setPageLoading] = useState(true);
+  const auth = getAuth();
 
   useEffect(() => {
-    if (!userLoading) {
-      // If a user is already set in context, redirect to dashboard
-      // This handles cases where user refreshes the page while logged in
-      const storedUser = localStorage.getItem('userProfile');
-      if (storedUser) {
-        router.push('/dashboard');
-      } else {
-        setPageLoading(false);
-      }
+    // This effect handles auto-redirection if a user is already logged in.
+    const storedUser = localStorage.getItem('userProfile');
+    if (user || storedUser) {
+      router.push('/dashboard');
+    } else {
+      setPageLoading(false);
     }
-  }, [user, userLoading, router]);
+  }, [user, router]);
 
   const handleLogin = async (e: FormEvent) => {
     e.preventDefault()
     setLoading(true)
     setError(null)
     
-    // Demo login logic
-    const demoUser = users.find(u => u.email === email && u.password === password);
+    try {
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const firebaseUser = userCredential.user;
 
-    if (demoUser) {
-      setUser(demoUser);
-      toast({
-        title: "Login Successful",
-        description: `Welcome back, ${demoUser.name}!`,
-      });
-      router.push("/dashboard");
-    } else {
-       setError("Invalid email or password. Please try again.");
+      const userDocRef = doc(db, "users", firebaseUser.uid);
+      const userDocSnap = await getDoc(userDocRef);
+
+      if (userDocSnap.exists()) {
+        const userData = userDocSnap.data() as User;
+        setUser(userData);
+        toast({
+          title: "Login Successful",
+          description: `Welcome back, ${userData.name}!`,
+        });
+        router.push("/dashboard");
+      } else {
+        throw new Error("User data not found in Firestore.");
+      }
+    } catch (error: any) {
+       const errorMessage = "Invalid email or password. Please try again.";
+       setError(errorMessage);
        toast({
         variant: "destructive",
         title: "Login Failed",
-        description: "Invalid email or password. Please try again.",
+        description: errorMessage,
       });
+    } finally {
+        setLoading(false)
     }
-
-    setLoading(false)
   }
 
-  if (pageLoading && userLoading) {
+  if (pageLoading) {
     return (
        <div className="flex items-center justify-center min-h-screen bg-background">
           <Card className="mx-auto max-w-sm w-full">

@@ -30,6 +30,7 @@ import { useUser } from "@/context/user-context"
 import { UserFormDialog } from "./user-form-dialog"
 
 const getInitials = (name: string) => {
+  if (!name) return '';
   return name
     .split(' ')
     .map(n => n[0])
@@ -44,7 +45,7 @@ export default function AdminPage() {
   const [editingUser, setEditingUser] = React.useState<User | undefined>(undefined)
 
   React.useEffect(() => {
-    if (user.role !== 'Music Director') {
+    if (user && user.role !== 'Music Director') {
       router.push('/dashboard')
     }
   }, [user, router])
@@ -73,7 +74,7 @@ export default function AdminPage() {
   };
 
 
-  if (user.role !== 'Music Director') {
+  if (!user || user.role !== 'Music Director') {
     return (
         <div className="flex items-center justify-center h-full">
             <p>You are not authorized to view this page.</p>

@@ -5,7 +5,7 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 import { collection, getDocs, doc, setDoc, onSnapshot, writeBatch, getDoc, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import type { Song, User, Concert } from '@/lib/types';
-import { users as defaultUsers, songs as defaultSongs, concerts as defaultConcerts } from '@/lib/data';
+import { songs as defaultSongs, concerts as defaultConcerts } from '@/lib/data';
 
 interface UserContextType {
   user: User | null;
@@ -33,7 +33,6 @@ async function seedInitialData() {
     console.log("Seeding initial data if necessary...");
     const batch = writeBatch(db);
 
-    // Seed Taxonomy
     const taxonomyDocRef = doc(db, 'app-data', 'taxonomy');
     const taxonomySnap = await getDoc(taxonomyDocRef);
     if (!taxonomySnap.exists()) {
@@ -45,18 +44,6 @@ async function seedInitialData() {
         }
     }
 
-    // Seed Users
-    const usersCollectionRef = collection(db, 'users');
-    const usersSnapshot = await getDocs(usersCollectionRef);
-    if (usersSnapshot.empty) {
-        defaultUsers.forEach(user => {
-            const docRef = doc(db, 'users', user.id);
-            batch.set(docRef, user);
-        });
-        console.log("Seeding users...");
-    }
-
-    // Seed Songs
     const songsCollectionRef = collection(db, 'songs');
     const songsSnapshot = await getDocs(songsCollectionRef);
     if (songsSnapshot.empty) {
@@ -67,7 +54,6 @@ async function seedInitialData() {
         console.log("Seeding songs...");
     }
     
-    // Seed Concerts
     const concertsCollectionRef = collection(db, 'concerts');
     const concertsSnapshot = await getDocs(concertsCollectionRef);
     if (concertsSnapshot.empty) {
@@ -94,12 +80,12 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     async function setup() {
+        setLoading(true);
         await seedInitialData();
 
         const usersUnsubscribe = onSnapshot(collection(db, "users"), (snapshot) => {
             const usersData = snapshot.docs.map(doc => doc.data() as User);
             setUsersState(usersData);
-            if(loading) setLoading(false);
         });
 
         const songsUnsubscribe = onSnapshot(collection(db, "songs"), (snapshot) => {
@@ -123,7 +109,6 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
             setConcertsState(concertsData);
         });
         
-        // This effect runs only on the client
         try {
           const storedUser = localStorage.getItem('userProfile');
           if (storedUser) {
@@ -131,6 +116,8 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
           }
         } catch(e) {
           console.error("Failed to load user from localstorage", e)
+        } finally {
+            setLoading(false);
         }
 
         return () => {
@@ -190,17 +177,14 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
       
       const batch = writeBatch(db);
       
-      // Get IDs of new concerts
       const newConcertIds = new Set(newConcerts.map(c => c.id));
       
-      // Delete concerts that are not in the new list
       existingDocs.forEach(doc => {
         if (!newConcertIds.has(doc.id)) {
             batch.delete(doc.ref);
         }
       });
       
-      // Set/update new concerts
       newConcerts.forEach(c => {
         const docRef = doc(db, 'concerts', c.id);
         batch.set(docRef, c, { merge: true });
@@ -214,8 +198,9 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   }
 
   const updateUser = async (updatedFields: Partial<User>) => {
-    if (!user) return;
-    const updatedUser = { ...user, ...updatedFields };
+    const updatedUser = { ...(user || {}), ...updatedFields } as User;
+    if (!updatedUser.id) return;
+
     try {
       localStorage.setItem('userProfile', JSON.stringify(updatedUser));
       setUserState(updatedUser);
@@ -223,7 +208,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
       const userRef = doc(db, 'users', updatedUser.id);
       await setDoc(userRef, updatedUser, { merge: true });
 
-    } catch (error)_ {
+    } catch (error) {
       console.error("Failed to save user to localStorage/Firestore", error);
     }
   }

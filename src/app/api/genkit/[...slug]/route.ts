@@ -1,5 +1,6 @@
+
 import { copyrightInformationLookupFlow } from '@/ai/flows/copyright-information-lookup';
-import { createApiHandler } from '@genkit-ai/next/server';
+import { createApiHandler } from '@genkit-ai/next';
 
 const handler = createApiHandler({
   flows: [copyrightInformationLookupFlow],
@@ -7,3 +8,4 @@ const handler = createApiHandler({
 
 export const GET = handler;
 export const POST = handler;
+

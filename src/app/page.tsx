@@ -23,7 +23,7 @@ import { users } from "@/lib/data"
 export default function LoginPage() {
   const router = useRouter()
   const { toast } = useToast()
-  const { user, setUser, loading: userLoading } = useUser()
+  const { user, setUser, loading: userLoading, users: allUsers } = useUser()
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [error, setError] = useState<string | null>(null)
@@ -70,7 +70,7 @@ export default function LoginPage() {
     setLoading(false)
   }
 
-  if (pageLoading) {
+  if (pageLoading && userLoading) {
     return (
        <div className="flex items-center justify-center min-h-screen bg-background">
           <Card className="mx-auto max-w-sm w-full">

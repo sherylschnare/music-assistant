@@ -8,7 +8,7 @@ import type { Song, User, Concert } from '@/lib/types';
 import { users as defaultUsers, songs as defaultSongs, concerts as defaultConcerts } from '@/lib/data';
 
 interface UserContextType {
-  user: User;
+  user: User | null;
   setUser: (user: Partial<User>) => void;
   users: User[];
   setUsers: (users: User[]) => void;
@@ -26,7 +26,6 @@ interface UserContextType {
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
 
-const defaultUser: User = defaultUsers[0];
 const baseSubtypes = ["Christmas", "Easter", "Spring", "Winter", "Fall", "Summer", "Celtic", "Pop"];
 const baseTypes = ["Choral", "Orchestral", "Band", "Solo", "Chamber", "Holiday"];
 
@@ -85,7 +84,7 @@ async function seedInitialData() {
 
 
 export const UserProvider = ({ children }: { children: ReactNode }) => {
-  const [user, setUserState] = useState<User>(defaultUser);
+  const [user, setUserState] = useState<User | null>(null);
   const [users, setUsersState] = useState<User[]>([]);
   const [songs, setSongsState] = useState<Song[]>([]);
   const [concerts, setConcertsState] = useState<Concert[]>([]);
@@ -123,19 +122,15 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
             const concertsData = snapshot.docs.map(doc => doc.data() as Concert);
             setConcertsState(concertsData);
         });
-
+        
+        // This effect runs only on the client
         try {
           const storedUser = localStorage.getItem('userProfile');
           if (storedUser) {
             setUserState(JSON.parse(storedUser));
-          } else if (users.length > 0) {
-            setUserState(users[0]);
           }
         } catch(e) {
           console.error("Failed to load user from localstorage", e)
-          if (users.length > 0) {
-            setUserState(users[0]);
-          }
         }
 
         return () => {
@@ -147,7 +142,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     }
 
     setup();
-  }, [loading, users.length]);
+  }, []);
 
   const setUsers = async (newUsers: User[]) => {
     try {
@@ -219,6 +214,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   }
 
   const updateUser = async (updatedFields: Partial<User>) => {
+    if (!user) return;
     const updatedUser = { ...user, ...updatedFields };
     try {
       localStorage.setItem('userProfile', JSON.stringify(updatedUser));
@@ -227,7 +223,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
       const userRef = doc(db, 'users', updatedUser.id);
       await setDoc(userRef, updatedUser, { merge: true });
 
-    } catch (error) {
+    } catch (error)_ {
       console.error("Failed to save user to localStorage/Firestore", error);
     }
   }
@@ -262,7 +258,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
 
   return (
     <UserContext.Provider value={value}>
-      {!loading && children}
+      {children}
     </UserContext.Provider>
   );
 };

@@ -111,7 +111,6 @@ function UserProfile() {
   }
 
   return (
-    <UserProvider>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" className="flex items-center gap-3 w-full h-auto p-2 justify-start">
@@ -150,7 +149,6 @@ function UserProfile() {
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
-    </UserProvider>
   );
 }
 

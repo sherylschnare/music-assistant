@@ -3,7 +3,7 @@
 
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import React, { useState, FormEvent } from "react"
+import React, { useState, FormEvent, useEffect } from "react"
 import { AppLogo } from "@/components/icons"
 import { Button } from "@/components/ui/button"
 import {
@@ -15,18 +15,32 @@ import {
 } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
-import { getAuth, signInWithEmailAndPassword } from "firebase/auth";
+import { getAuth, signInWithEmailAndPassword, onAuthStateChanged } from "firebase/auth";
 import { useToast } from "@/hooks/use-toast"
+import { useUser } from "@/context/user-context"
+import { Skeleton } from "@/components/ui/skeleton"
 
 export default function LoginPage() {
   const router = useRouter()
   const { toast } = useToast()
+  const { user, loading: userLoading } = useUser();
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+  const [pageLoading, setPageLoading] = useState(true);
   
   const auth = getAuth();
+
+  useEffect(() => {
+    if (!userLoading) {
+      if (user) {
+        router.push('/dashboard');
+      } else {
+        setPageLoading(false);
+      }
+    }
+  }, [user, userLoading, router]);
 
   const handleLogin = async (e: FormEvent) => {
     e.preventDefault()
@@ -72,6 +86,33 @@ export default function LoginPage() {
     } finally {
       setLoading(false)
     }
+  }
+
+  if (pageLoading) {
+    return (
+       <div className="flex items-center justify-center min-h-screen bg-background">
+          <Card className="mx-auto max-w-sm w-full">
+            <CardHeader>
+              <div className="flex items-center justify-center mb-4">
+                <Skeleton className="h-10 w-10 rounded-full" />
+              </div>
+              <Skeleton className="h-6 w-32 mx-auto" />
+              <Skeleton className="h-4 w-48 mx-auto" />
+            </CardHeader>
+            <CardContent className="grid gap-4">
+              <div className="grid gap-2">
+                <Skeleton className="h-4 w-12" />
+                <Skeleton className="h-10 w-full" />
+              </div>
+              <div className="grid gap-2">
+                <Skeleton className="h-4 w-16" />
+                <Skeleton className="h-10 w-full" />
+              </div>
+              <Skeleton className="h-10 w-full" />
+            </CardContent>
+          </Card>
+       </div>
+    )
   }
 
   return (

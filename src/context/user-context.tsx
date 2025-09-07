@@ -2,11 +2,11 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { collection, getDocs, doc, setDoc, onSnapshot, writeBatch, getDoc, updateDoc, Timestamp } from 'firebase/firestore';
+import { collection, getDocs, doc, setDoc, onSnapshot, writeBatch, getDoc, updateDoc, Timestamp, query, limit } from 'firebase/firestore';
 import { getAuth, onAuthStateChanged, User as FirebaseUser } from 'firebase/auth';
 import { db, auth } from '@/lib/firebase';
 import type { Song, User, Concert } from '@/lib/types';
-import { users as defaultUsers, songs as defaultSongs, concerts as defaultConcerts } from '@/lib/data';
+import { songs as defaultSongs, concerts as defaultConcerts } from '@/lib/data';
 
 interface UserContextType {
   user: User | null;
@@ -58,58 +58,38 @@ const baseTypes = ["Choral", "Orchestral", "Band", "Solo", "Chamber", "Holiday"]
 
 async function seedInitialData() {
     console.log("Checking if initial data seeding is necessary...");
-    const batch = writeBatch(db);
-
-    // Seed Taxonomy
-    const taxonomyDocRef = doc(db, 'app-data', 'taxonomy');
-    const taxonomySnap = await getDoc(taxonomyDocRef);
-    if (!taxonomySnap.exists()) {
-        try {
-            batch.set(taxonomyDocRef, { types: baseTypes, subtypes: baseSubtypes });
-            console.log("Seeding taxonomy...");
-        } catch (error) {
-            console.error("Failed to seed taxonomy data", error);
-        }
-    }
-
-    // Seed Users
-    // Important: We can't deterministically create auth users, so we won't seed them.
-    // The first user to sign up can be made an admin.
-    // We'll leave the logic here commented out for reference.
-    /*
-    const usersCollectionRef = collection(db, 'users');
-    const usersSnapshot = await getDocs(usersCollectionRef);
-    if (usersSnapshot.empty) {
-        // You would need to create users in Firebase Auth and get their UIDs
-        // For this example, we'll assume the signup flow handles user creation.
-        console.log("Users collection is empty. Users should be created via signup.");
-    }
-    */
-
-    // Seed Songs
     const songsCollectionRef = collection(db, 'songs');
-    const songsSnapshot = await getDocs(songsCollectionRef);
+    const songsQuery = query(songsCollectionRef, limit(1));
+    const songsSnapshot = await getDocs(songsQuery);
+
     if (songsSnapshot.empty) {
+        console.log("Songs collection is empty. Seeding initial data...");
+        const batch = writeBatch(db);
+
+        // Seed Taxonomy
+        const taxonomyDocRef = doc(db, 'app-data', 'taxonomy');
+        batch.set(taxonomyDocRef, { types: baseTypes, subtypes: baseSubtypes });
+        console.log("Seeding taxonomy...");
+
+        // Seed Songs
         defaultSongs.forEach(song => {
             const docRef = doc(db, 'songs', song.id);
             batch.set(docRef, song);
         });
         console.log("Seeding songs...");
-    }
-    
-    // Seed Concerts
-    const concertsCollectionRef = collection(db, 'concerts');
-    const concertsSnapshot = await getDocs(concertsCollectionRef);
-    if (concertsSnapshot.empty) {
+        
+        // Seed Concerts
         defaultConcerts.forEach(concert => {
             const docRef = doc(db, 'concerts', concert.id);
             batch.set(docRef, concert);
         });
         console.log("Seeding concerts...");
-    }
 
-    await batch.commit();
-    console.log("Initial data seeding check complete.");
+        await batch.commit();
+        console.log("Initial data seeding complete.");
+    } else {
+        console.log("Songs collection is not empty. Skipping seeding.");
+    }
 }
 
 

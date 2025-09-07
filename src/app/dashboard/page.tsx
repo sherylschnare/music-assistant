@@ -127,7 +127,7 @@ export default function DashboardPage() {
         description="Here's a snapshot of your orchestra's activity."
       >
         <div className="flex items-center gap-4">
-          <Button asChild>
+           <Button asChild>
             <Link href="/dashboard/library/song-form-dialog">
               <Plus className="mr-2 h-4 w-4" /> Add New Music
             </Link>

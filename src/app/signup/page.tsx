@@ -16,7 +16,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { AppLogo } from "@/components/icons"
 import { getAuth, createUserWithEmailAndPassword } from "firebase/auth"
-import { doc, setDoc } from "firebase/firestore"
+import { doc, setDoc, getDocs, collection } from "firebase/firestore"
 import { db } from "@/lib/firebase"
 import { useToast } from "@/hooks/use-toast"
 
@@ -53,20 +53,27 @@ export default function SignupPage() {
 
       try {
         const auth = getAuth()
+        const usersCollectionRef = collection(db, "users");
+        const usersSnapshot = await getDocs(usersCollectionRef);
+        const isFirstUser = usersSnapshot.empty;
+        
         const userCredential = await createUserWithEmailAndPassword(auth, email, password)
         const user = userCredential.user;
+
+        // Assign role based on whether this is the first user
+        const userRole = isFirstUser ? "Music Director" : "Musician";
 
         // Create a new user document in Firestore
         await setDoc(doc(db, "users", user.uid), {
             id: user.uid,
             name: `${firstName} ${lastName}`,
             email: email,
-            role: "Musician",
+            role: userRole,
         });
         
         toast({
           title: "Account Created",
-          description: "Your account has been successfully created.",
+          description: `Your account has been successfully created as a ${userRole}.`,
         })
         router.push("/dashboard");
 
@@ -107,7 +114,7 @@ export default function SignupPage() {
           </div>
           <CardTitle className="text-xl font-headline text-center">Create your Account</CardTitle>
           <CardDescription className="text-center">
-            Enter your information to create an account
+            Enter your information to create an account. The first user to sign up will be the Music Director.
           </CardDescription>
         </CardHeader>
         <CardContent>

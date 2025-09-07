@@ -14,7 +14,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/page-header";
 import { useUser } from "@/context/user-context";
-import { getAuth, signOut } from "firebase/auth";
 import { useToast } from "@/hooks/use-toast";
 import React from "react";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -35,7 +34,7 @@ function StatCard({ title, value, icon: Icon, description }: { title: string, va
 }
 
 export default function DashboardPage() {
-  const { user, songs, concerts, loading } = useUser();
+  const { user, songs, concerts, loading, setUser } = useUser();
   const router = useRouter();
   const { toast } = useToast();
 
@@ -46,22 +45,12 @@ export default function DashboardPage() {
   }, [user, loading, router]);
 
   const handleLogout = async () => {
-    const auth = getAuth();
-    try {
-      await signOut(auth);
-      toast({
+    setUser(null);
+    toast({
         title: "Logged Out",
         description: "You have been successfully logged out."
-      })
-      router.push('/');
-    } catch (error) {
-      console.error("Logout failed:", error);
-      toast({
-        variant: "destructive",
-        title: "Logout Failed",
-        description: "An error occurred while logging out. Please try again."
-      })
-    }
+    })
+    router.push('/');
   }
 
   if (loading || !user) {
@@ -180,7 +169,7 @@ export default function DashboardPage() {
           <CardHeader>
             <CardTitle>Recently Performed</CardTitle>
             <CardDescription>A look at pieces performed in recent concerts.</CardDescription>
-          </Header>
+          </CardHeader>
           <CardContent>
             {recentlyPerformed.length > 0 ? (
                 <ul className="space-y-3">

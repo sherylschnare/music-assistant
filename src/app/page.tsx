@@ -15,22 +15,20 @@ import {
 } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
-import { getAuth, signInWithEmailAndPassword, onAuthStateChanged } from "firebase/auth";
 import { useToast } from "@/hooks/use-toast"
 import { useUser } from "@/context/user-context"
 import { Skeleton } from "@/components/ui/skeleton"
+import { users } from "@/lib/data"
 
 export default function LoginPage() {
   const router = useRouter()
   const { toast } = useToast()
-  const { user, loading: userLoading } = useUser();
+  const { user, setUser, loading: userLoading } = useUser();
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [pageLoading, setPageLoading] = useState(true);
-  
-  const auth = getAuth();
 
   useEffect(() => {
     if (!userLoading) {
@@ -47,45 +45,30 @@ export default function LoginPage() {
     setLoading(true)
     setError(null)
     
-    try {
-      await signInWithEmailAndPassword(auth, email, password)
-      toast({
-        title: "Login Successful",
-        description: "Welcome back!",
-      })
-      router.push("/dashboard")
-    } catch (error: any) {
-      const errorCode = error.code;
-      let errorMessage = "An unknown error occurred.";
-      switch (errorCode) {
-        case 'auth/invalid-email':
-          errorMessage = 'Please enter a valid email address.';
-          break;
-        case 'auth/user-disabled':
-          errorMessage = 'This account has been disabled.';
-          break;
-        case 'auth/user-not-found':
-          errorMessage = 'No account found with this email address.';
-          break;
-        case 'auth/wrong-password':
-          errorMessage = 'Incorrect password. Please try again.';
-          break;
-        case 'auth/invalid-credential':
-          errorMessage = 'Invalid credentials. Please check your email and password.';
-          break;
-        default:
-          errorMessage = 'Failed to log in. Please check your credentials.';
-          break;
-      }
-      setError(errorMessage);
-      toast({
+    // Demo mode login
+    if (email === 'sherylschnare@birdsongstudio.ca' && password === 'Can1000dians@1') {
+        const demoUser = users.find(u => u.email === email);
+        if (demoUser) {
+            toast({
+                title: "Login Successful",
+                description: "Welcome back! Running in demo mode.",
+            });
+            setUser(demoUser);
+            router.push("/dashboard");
+        } else {
+            // This case should theoretically not be hit if data is consistent
+            setError("Could not find demo user data.");
+        }
+    } else {
+       setError("Invalid email or password for demo mode.");
+       toast({
         variant: "destructive",
         title: "Login Failed",
-        description: errorMessage,
+        description: "Please use the provided demo credentials.",
       })
-    } finally {
-      setLoading(false)
     }
+    
+    setLoading(false)
   }
 
   if (pageLoading) {
@@ -144,7 +127,8 @@ export default function LoginPage() {
               <Label htmlFor="password">Password</Label>
               <Input 
                 id="password" 
-                type="password" 
+                type="password"
+                placeholder="Password"
                 value={password} 
                 onChange={e => setPassword(e.target.value)} 
                 required 
@@ -158,12 +142,6 @@ export default function LoginPage() {
             </Button>
           </form>
           <div className="mt-4 text-center text-sm">
-            Don&apos;t have an account?{" "}
-            <Link href="/signup" className="underline">
-              Sign up
-            </Link>
-          </div>
-          <div className="mt-2 text-center text-sm">
             <Link href="/forgot-password" className="underline">
               Forgot Password?
             </Link>

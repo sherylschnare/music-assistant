@@ -63,7 +63,9 @@ function MainNav() {
   const { user } = useUser();
 
   const visibleNavItems = navItems.filter(item => {
-    return !item.requiredRole || item.requiredRole === user.role;
+    if (!item.requiredRole) return true;
+    if (!user) return false;
+    return item.requiredRole === user.role;
   });
 
   return (
@@ -95,11 +97,16 @@ function UserProfile() {
   };
   
   const getInitials = (name: string) => {
+    if (!name) return '';
     return name
       .split(' ')
       .map(n => n[0])
       .slice(0, 2)
       .join('');
+  }
+
+  if (!user) {
+    return null;
   }
 
   return (

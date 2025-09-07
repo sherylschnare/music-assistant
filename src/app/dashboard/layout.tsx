@@ -93,6 +93,7 @@ function UserProfile() {
   const { user } = useUser();
 
   const handleLogout = () => {
+    localStorage.removeItem('userProfile');
     router.push("/");
   };
   
@@ -161,7 +162,7 @@ export default function DashboardLayout({
   return (
     <UserProvider>
       <SidebarProvider>
-        <div className="flex min-h-screen" id="app-container">
+        <div className="flex min-h-screen">
           <Sidebar
             className="border-r bg-sidebar text-sidebar-foreground print:hidden"
             collapsible="icon"

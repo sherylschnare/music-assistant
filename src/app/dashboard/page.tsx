@@ -128,7 +128,7 @@ export default function DashboardPage() {
       >
         <div className="flex items-center gap-4">
           <Button asChild>
-            <Link href="/dashboard/library">
+            <Link href="/dashboard/library/song-form-dialog">
               <Plus className="mr-2 h-4 w-4" /> Add New Music
             </Link>
           </Button>
@@ -180,7 +180,7 @@ export default function DashboardPage() {
           <CardHeader>
             <CardTitle>Recently Performed</CardTitle>
             <CardDescription>A look at pieces performed in recent concerts.</CardDescription>
-          </CardHeader>
+          </Header>
           <CardContent>
             {recentlyPerformed.length > 0 ? (
                 <ul className="space-y-3">
